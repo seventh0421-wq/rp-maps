@@ -16,8 +16,10 @@ export interface Shop {
   isApartment: boolean;
   isSubdivision: boolean;
   openDays: number[];
-  openTime: string;
-  closeTime: string;
+  openTime?: string;
+  closeTime?: string;
+  isClosedThisWeek?: boolean;
+  reservationType?: '須提前預約' | '開放預約' | '不用預約';
   description: string;
   images: string[];
   tags: string[];

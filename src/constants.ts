@@ -8,6 +8,7 @@ export const SERVER_LIST = ['所有伺服器', '鳳凰', '利維坦', '迦樓羅
 export const TAG_LIST = ['全部', '咖啡廳', '酒吧', '賭場', '診所', '劇團'];
 export const RP_LEVEL_LIST = ['無', '輕', '中', '重'];
 export const DAYS_OF_WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+export const RESERVATION_LIST = ['不用預約', '開放預約', '須提前預約'];
 
 export const AREA_MAPS = {
   '薰衣草苗圃': { normal: 'https://i.meee.com.tw/4drSCaH.png', sub: 'https://i.meee.com.tw/a74hm5y.png' },

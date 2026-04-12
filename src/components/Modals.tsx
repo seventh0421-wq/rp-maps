@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Shield, KeyRound, HelpCircle, MapPin, Sparkles, Search, Edit3, Heart, MessageSquare, Twitter, MessageCircle, Link as LinkIcon, ImageIcon, Plus, Trash2, Globe, FileText, AlertTriangle, Settings, Info } from 'lucide-react';
 import { Shop } from '../types';
-import { TAG_LIST, SERVER_LIST, HOUSING_AREAS, DAYS_OF_WEEK, RP_LEVEL_LIST } from '../constants';
+import { TAG_LIST, SERVER_LIST, HOUSING_AREAS, DAYS_OF_WEEK, RP_LEVEL_LIST, RESERVATION_LIST } from '../constants';
 
 export const AdminLoginModal = ({ isOpen, onClose, onLogin }: { isOpen: boolean, onClose: () => void, onLogin: () => void }) => {
   const [pwd, setPwd] = useState('');
@@ -300,7 +300,7 @@ export const DisclaimerModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
 };
 
 export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, editingShop }: { isOpen: boolean, onClose: () => void, onSubmit: (data: Shop, isEdit: boolean) => void, currentArea: string, editingShop: Shop | null }) => {
-  const defaultForm = { name: '', ownerName: '', type: '咖啡廳', customType: '', server: '鳳凰', location: currentArea, ward: 1, plot: 1, isApartment: false, isSubdivision: false, openDays: [new Date().getDay()], openTime: '20:00', closeTime: '23:00', description: '', images: [''], twitter: '', discord: '', website: '', editPassword: '', rpLevels: [] as string[], tags: [] as string[] };
+  const defaultForm = { name: '', ownerName: '', type: '咖啡廳', customType: '', server: '鳳凰', location: currentArea, ward: 1, plot: 1, isApartment: false, isSubdivision: false, openDays: [] as number[], openTime: '', closeTime: '', isClosedThisWeek: false, reservationType: '不用預約' as '不用預約' | '開放預約' | '須提前預約', description: '', images: [''], twitter: '', discord: '', website: '', editPassword: '', rpLevels: [] as string[], tags: [] as string[] };
   const [formData, setFormData] = useState(defaultForm);
   const [newTag, setNewTag] = useState('');
 
@@ -319,9 +319,11 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
           plot: editingShop.plot, 
           isApartment: !!editingShop.isApartment, 
           isSubdivision: !!editingShop.isSubdivision, 
-          openDays: editingShop.openDays, 
-          openTime: editingShop.openTime, 
-          closeTime: editingShop.closeTime, 
+          openDays: editingShop.openDays || [], 
+          openTime: editingShop.openTime || '', 
+          closeTime: editingShop.closeTime || '', 
+          isClosedThisWeek: !!editingShop.isClosedThisWeek,
+          reservationType: editingShop.reservationType || '不用預約',
           description: editingShop.description, 
           images: editingShop.images && editingShop.images.length > 0 ? editingShop.images : [''], 
           twitter: editingShop.socialLinks?.twitter || '', 
@@ -360,7 +362,6 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.openDays.length === 0) return alert("請至少選擇一天營業日！");
     if (formData.tags.length === 0) return alert("請至少設定一個標籤！");
     
     const validImages = formData.images.filter(url => url.trim() !== '');
@@ -369,13 +370,15 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
       type: formData.tags[0], // Use first tag as primary type for backward compatibility
       id: editingShop ? editingShop.id : `shop_${Date.now()}`, 
       images: validImages, 
+      openTime: formData.openTime || undefined,
+      closeTime: formData.closeTime || undefined,
       socialLinks: { twitter: formData.twitter, discord: formData.discord, website: formData.website } 
     };
     onSubmit(submitData, !!editingShop); onClose();
   };
   const isEditing = !!editingShop;
   return (
-    <div className="absolute inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+    <div className="absolute inset-0 z-[4500] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
       <div className="bg-white/95 border border-slate-200 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
         <div className={`p-5 border-b border-slate-100 flex justify-between items-center ${isEditing ? 'bg-amber-50' : 'bg-emerald-50'}`}><h2 className={`text-xl font-bold flex items-center gap-2 ${isEditing ? 'text-amber-800' : 'text-emerald-800'}`}>{isEditing ? <Edit3 size={20} /> : <MapPin size={20} />}{isEditing ? `編輯店面：${editingShop?.name}` : `登記新店面`}</h2><button onClick={onClose} className="text-slate-400 hover:text-slate-700 bg-white p-1 rounded-full shadow-sm"><X size={20} /></button></div>
         <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar">
@@ -414,10 +417,60 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
               </div>
             </div>
             <div className="bg-slate-100/50 p-4 rounded-2xl border border-slate-200 flex flex-col gap-4"><div className="flex gap-4"><div className="flex-1"><label className="block text-sm font-bold text-slate-600 mb-1">住宅區</label><select className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:border-emerald-500" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})}>{HOUSING_AREAS.map(area => <option key={area} value={area}>{area}</option>)}</select></div><div className="flex-1"><label className="block text-sm font-bold text-slate-600 mb-1">第幾區</label><input required type="number" min="1" max="30" className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:border-emerald-500" value={formData.ward} onChange={e => setFormData({...formData, ward: e.target.value === '' ? 1 : parseInt(e.target.value)})} /></div></div><div className="flex gap-4 items-end"><div className="flex-1"><label className="block text-sm font-bold text-slate-600 mb-1">{formData.isApartment ? '房間號碼' : '番地'}</label><input required type="number" min="1" max={formData.isApartment ? 999 : 60} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:border-emerald-500" value={formData.plot} onChange={e => setFormData({...formData, plot: e.target.value === '' ? 1 : parseInt(e.target.value)})} /></div><div className="flex-1 flex flex-col gap-2"><label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm transition-colors hover:bg-slate-50"><input type="checkbox" checked={formData.isApartment} onChange={e => setFormData({...formData, isApartment: e.target.checked})} className="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-500" />🏢 位於公寓大樓</label></div></div>{formData.isApartment && (<div className="flex gap-4 animate-in fade-in slide-in-from-top-1"><div className="flex-1"><label className="block text-sm font-bold text-slate-600 mb-1">公寓大樓位置</label><select className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:border-emerald-500" value={formData.isSubdivision ? 'sub' : 'normal'} onChange={e => setFormData({...formData, isSubdivision: e.target.value === 'sub'})}><option value="normal">一般區大樓</option><option value="sub">擴建區大樓</option></select></div></div>)}</div>
-            <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100"><label className="block text-sm font-bold text-amber-800 mb-2">營業時間</label><div className="flex gap-1 mb-3">{DAYS_OF_WEEK.map((day, idx) => (<button type="button" key={day} onClick={() => toggleDay(idx)} className={`flex-1 py-1.5 rounded-lg text-sm font-bold transition-all border ${formData.openDays.includes(idx) ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-white text-slate-400 border-slate-200'}`}>{day}</button>))}</div><div className="flex items-center gap-2"><input required type="time" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-amber-500" value={formData.openTime} onChange={e => setFormData({...formData, openTime: e.target.value})} /><span className="text-slate-400 font-bold">~</span><input required type="time" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-amber-500" value={formData.closeTime} onChange={e => setFormData({...formData, closeTime: e.target.value})} /></div></div>
+            <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-bold text-amber-800">營業時間 (選填)</label>
+                <button 
+                  type="button" 
+                  onClick={() => setFormData({ ...formData, isClosedThisWeek: !formData.isClosedThisWeek })}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all border ${formData.isClosedThisWeek ? 'bg-rose-500 text-white border-rose-500 shadow-sm' : 'bg-white text-slate-400 border-slate-200 hover:border-rose-300 hover:text-rose-500'}`}
+                >
+                  {formData.isClosedThisWeek ? '🚫 本週休業中' : '💤 設定本週休業'}
+                </button>
+              </div>
+              <p className="text-[10px] text-amber-600 font-bold mb-2">💡 若營業時間不固定，請先以本週或下週為主。您可以隨時回來修改資訊。</p>
+              {!formData.isClosedThisWeek ? (
+                <>
+                  <div className="flex gap-1 mb-3">{DAYS_OF_WEEK.map((day, idx) => (<button type="button" key={day} onClick={() => toggleDay(idx)} className={`flex-1 py-1.5 rounded-lg text-sm font-bold transition-all border ${formData.openDays.includes(idx) ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-white text-slate-400 border-slate-200'}`}>{day}</button>))}</div>
+                  <div className="flex items-center gap-2">
+                    <input type="time" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-amber-500" value={formData.openTime} onChange={e => setFormData({...formData, openTime: e.target.value})} />
+                    <span className="text-slate-400 font-bold">~</span>
+                    <input type="time" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-amber-500" value={formData.closeTime} onChange={e => setFormData({...formData, closeTime: e.target.value})} />
+                  </div>
+                </>
+              ) : (
+                <div className="py-4 text-center bg-rose-50/50 rounded-xl border border-rose-100 border-dashed">
+                  <p className="text-xs font-bold text-rose-600">已設定為本週休業，地圖將顯示為休息中。</p>
+                </div>
+              )}
+            </div>
+            <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
+              <label className="block text-sm font-bold text-rose-800 mb-2">預約制度</label>
+              <div className="flex gap-2">
+                {RESERVATION_LIST.map(type => (
+                  <button 
+                    type="button" 
+                    key={type} 
+                    onClick={() => setFormData({ ...formData, reservationType: type as any })} 
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${formData.reservationType === type ? 'bg-rose-500 text-white border-rose-500 shadow-sm' : 'bg-white text-slate-400 border-slate-200'}`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100"><label className="block text-sm font-bold text-indigo-800 mb-2">RP 程度 (可複選)</label><div className="flex gap-2">{RP_LEVEL_LIST.map(level => (<button type="button" key={level} onClick={() => toggleRPLevel(level)} className={`flex-1 py-1.5 rounded-lg text-sm font-bold transition-all border ${formData.rpLevels.includes(level) ? 'bg-indigo-500 text-white border-indigo-500 shadow-sm' : 'bg-white text-slate-400 border-slate-200'}`}>{level}</button>))}</div></div>
             <div className="bg-sky-50/50 p-4 rounded-2xl border border-sky-100"><label className="block text-sm font-bold text-sky-800 mb-3">社群與網站 (選填)</label><div className="flex flex-col gap-2"><div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 focus-within:border-sky-500 transition-all"><Twitter size={16} className="text-sky-500" /><input type="url" className="flex-1 outline-none text-sm bg-transparent" placeholder="Twitter 網址" value={formData.twitter} onChange={e => setFormData({...formData, twitter: e.target.value})} /></div><div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 focus-within:border-indigo-500 transition-all"><MessageCircle size={16} className="text-indigo-500" /><input type="url" className="flex-1 outline-none text-sm bg-transparent" placeholder="Discord 群組網址" value={formData.discord} onChange={e => setFormData({...formData, discord: e.target.value})} /></div><div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 focus-within:border-emerald-500 transition-all"><LinkIcon size={16} className="text-emerald-500" /><input type="url" className="flex-1 outline-none text-sm bg-transparent" placeholder="個人網站 / 噗浪網址" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} /></div></div></div>
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200"><label className="flex items-center justify-between text-sm font-bold text-slate-600 mb-2"><span className="flex items-center gap-1"><ImageIcon size={16}/> 宣傳照片 (最多4張)</span><span className="text-xs text-slate-400 font-normal">{formData.images.length} / 4</span></label><div className="flex flex-col gap-2">{formData.images.map((url, index) => (<div key={index} className="flex gap-2 items-center"><input type="url" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-emerald-500" value={url} onChange={e => handleImageChange(index, e.target.value)} placeholder="貼上圖片網址" />{formData.images.length > 1 && (<button type="button" onClick={() => removeImageField(index)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>)}</div>))}</div>{formData.images.length < 4 && (<button type="button" onClick={addImageField} className="mt-3 text-sm text-emerald-600 font-bold flex items-center gap-1 hover:text-emerald-700"><Plus size={14} /> 新增照片</button>)}</div>
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+              <label className="flex items-center justify-between text-sm font-bold text-slate-600 mb-2">
+                <span className="flex items-center gap-1"><ImageIcon size={16}/> 宣傳照片 (最多4張)</span>
+                <span className="text-xs text-slate-400 font-normal">{formData.images.length} / 4</span>
+              </label>
+              <div className="mb-3 p-2.5 bg-sky-50 border border-sky-100 rounded-xl flex items-center justify-between gap-2">
+                <p className="text-[10px] text-sky-700 font-bold">推薦使用圖床：<span className="text-sky-600">meee.com.tw</span></p>
+                <a href="https://meee.com.tw/" target="_blank" rel="noreferrer" className="px-2 py-1 bg-sky-500 text-white text-[10px] font-black rounded-lg hover:bg-sky-600 transition-colors shadow-sm">前往上傳</a>
+              </div>
+              <div className="flex flex-col gap-2">{formData.images.map((url, index) => (<div key={index} className="flex gap-2 items-center"><input type="url" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-emerald-500" value={url} onChange={e => handleImageChange(index, e.target.value)} placeholder="貼上圖片網址" />{formData.images.length > 1 && (<button type="button" onClick={() => removeImageField(index)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>)}</div>))}</div>{formData.images.length < 4 && (<button type="button" onClick={addImageField} className="mt-3 text-sm text-emerald-600 font-bold flex items-center gap-1 hover:text-emerald-700"><Plus size={14} /> 新增照片</button>)}</div>
             <div><label className="block text-sm font-bold text-slate-600 mb-1">店鋪介紹</label><textarea required rows={3} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 resize-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="寫下歡迎詞..." /></div>
             <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100"><label className="flex items-center gap-2 text-sm font-bold text-rose-800 mb-1"><KeyRound size={16} /> 店鋪編輯密碼</label><p className="text-xs text-rose-600/80 mb-2">請設定密碼，未來修改或刪除資訊時會用到。</p><input required type="text" className="w-full bg-white border border-rose-200 rounded-xl px-4 py-2 outline-none focus:border-rose-500 text-rose-900 font-mono" value={formData.editPassword} onChange={e => setFormData({...formData, editPassword: e.target.value})} placeholder="例如：mycafe123" /></div>
           </form>

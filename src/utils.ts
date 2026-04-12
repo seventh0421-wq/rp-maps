@@ -7,6 +7,7 @@ import { PLOT_COORDINATES } from './constants';
 import { Shop } from './types';
 
 export const checkIsOpen = (shop: Shop) => {
+  if (shop.isClosedThisWeek) return false;
   if (!shop.openDays || !shop.openTime || !shop.closeTime) return false;
   const now = new Date();
   const currentDay = now.getDay();

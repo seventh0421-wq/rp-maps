@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { X, Heart, Edit3, Globe, MapPin, Clock, MessageSquare, Twitter, MessageCircle, Link as LinkIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Heart, Edit3, Globe, MapPin, Clock, MessageSquare, Twitter, MessageCircle, Link as LinkIcon, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Shop } from '../types';
 import { checkIsOpen } from '../utils';
 import { DAYS_OF_WEEK } from '../constants';
@@ -89,6 +89,9 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
 <div className="absolute bottom-5 left-6 right-6 pointer-events-none">
             <div className="flex gap-2 mb-2">
               <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${isCurrentlyOpen ? 'bg-emerald-500 text-white' : 'bg-slate-500/80 text-white'}`}>{isCurrentlyOpen ? '營業中' : '休息中'}</div>
+              {shop.reservationType && shop.reservationType !== '不用預約' && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500 text-white shadow-sm">{shop.reservationType}</div>
+              )}
               {shop.rpLevels && shop.rpLevels.length > 0 && (
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-500 text-white shadow-sm">RP: {shop.rpLevels.join('/')}</div>
               )}
@@ -101,7 +104,12 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
           <div className="flex flex-col gap-5 text-sm shrink-0">
             <div className="flex items-start gap-4"><div className="p-2.5 bg-sky-100 rounded-xl text-sky-600 shadow-sm border border-sky-200/50"><Globe size={20} /></div><div><p className="text-slate-500 text-xs font-bold mb-0.5">所在伺服器</p><p className="font-extrabold text-slate-800 text-base">{shop.server}</p></div></div>
             <div className="flex items-start gap-4"><div className="p-2.5 bg-emerald-100 rounded-xl text-emerald-600 shadow-sm border border-emerald-200/50"><MapPin size={20} /></div><div><p className="text-slate-500 text-xs font-bold mb-0.5">詳細地址</p><p className="font-extrabold text-slate-800 text-base">{shop.location} 第 {shop.ward} 區 {shop.isApartment ? `公寓 ${shop.plot}號房` : `${shop.plot}番地`}</p></div></div>
-            <div className="flex items-start gap-4"><div className="p-2.5 bg-amber-100 rounded-xl text-amber-600 shadow-sm border border-amber-200/50"><Clock size={20} /></div><div><p className="text-slate-500 text-xs font-bold mb-0.5">營業時間</p><p className="font-extrabold text-slate-800 text-base">每週{displayDays} {shop.openTime} - {shop.closeTime}</p></div></div>
+            {displayDays && (
+              <div className="flex items-start gap-4"><div className="p-2.5 bg-amber-100 rounded-xl text-amber-600 shadow-sm border border-amber-200/50"><Clock size={20} /></div><div><p className="text-slate-500 text-xs font-bold mb-0.5">營業時間</p><p className="font-extrabold text-slate-800 text-base">每週{displayDays} {shop.openTime} {shop.closeTime ? `- ${shop.closeTime}` : ''}</p></div></div>
+            )}
+            {shop.reservationType && shop.reservationType !== '不用預約' && (
+              <div className="flex items-start gap-4"><div className="p-2.5 bg-rose-100 rounded-xl text-rose-600 shadow-sm border border-rose-200/50"><Calendar size={20} /></div><div><p className="text-slate-500 text-xs font-bold mb-0.5">預約制度</p><p className="font-extrabold text-slate-800 text-base">{shop.reservationType}</p></div></div>
+            )}
           </div>
           <div className="h-px bg-slate-200 w-full my-1 shrink-0"></div>
           <div className="shrink-0"><h3 className="text-sm font-bold text-emerald-700 mb-3 flex items-center gap-2"><MessageSquare size={18} className="text-emerald-500"/> 店鋪介紹</h3><p className="text-sm text-slate-700 leading-relaxed bg-white p-5 rounded-2xl border border-slate-200 shadow-sm whitespace-pre-wrap font-medium">{shop.description}</p></div>
