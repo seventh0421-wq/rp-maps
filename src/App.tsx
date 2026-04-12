@@ -286,6 +286,7 @@ export default function App() {
               </div>
               <h1 className="text-5xl font-black text-slate-900 tracking-tight">歡迎來到光之街角</h1>
               <p className="text-xl text-slate-500 font-medium">推開這扇門，遇見艾奧傑亞的另一種生活。</p>
+              <p className="text-sm text-emerald-600 font-bold bg-emerald-50 px-4 py-1.5 rounded-full inline-block border border-emerald-100">🖥️ 建議使用電腦版網頁以獲得最佳觀看體驗</p>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
