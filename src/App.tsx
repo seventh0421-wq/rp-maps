@@ -35,8 +35,8 @@ export default function App() {
   const [isPwdPromptOpen, setIsPwdPromptOpen] = useState(false);
   const [pwdErrorMsg, setPwdErrorMsg] = useState('');
   const [shopToEdit, setShopToEdit] = useState<Shop | null>(null); 
-  const [activeArea, setActiveArea] = useState('穹頂皓天'); 
-  const [isSubdivision, setIsSubdivision] = useState(true);
+  const [activeArea, setActiveArea] = useState('選擇住宅區'); 
+  const [isSubdivision, setIsSubdivision] = useState(false);
   const [activeServer, setActiveServer] = useState('所有伺服器');
   const [activeTag, setActiveTag] = useState('全部');
   const [searchQuery, setSearchQuery] = useState('');
@@ -141,10 +141,15 @@ export default function App() {
     return matchArea && matchSubdivision && matchServer && matchTag && matchSearch;
   });
 
-  const mapMarkers: Marker[] = filteredShops.map(shop => {
-    const coords = getPlotCoordinates(shop.location, shop.plot, shop.isApartment, shop.isSubdivision);
-    return { id: shop.id, x: coords.x, y: coords.y, data: shop, isBookmarked: bookmarks.includes(shop.id) };
-  });
+  const mapMarkers: Marker[] = filteredShops
+    .filter(shop => {
+      const shopIsSub = shop.isApartment ? shop.isSubdivision : shop.plot > 30;
+      return shop.location === activeArea && (isSubdivision ? shopIsSub : !shopIsSub);
+    })
+    .map(shop => {
+      const coords = getPlotCoordinates(shop.location, shop.plot, shop.isApartment, shop.isSubdivision);
+      return { id: shop.id, x: coords.x, y: coords.y, data: shop, isBookmarked: bookmarks.includes(shop.id) };
+    });
 
   const dynamicTags = Array.from(new Set([...TAG_LIST, ...shops.map(shop => shop.type), ...RP_LEVEL_LIST.map(level => `RP: ${level}`)]));
   const searchSuggestions = searchQuery.trim() === '' ? [] : shops.filter(shop => 
@@ -210,15 +215,16 @@ export default function App() {
               <div className="flex flex-col hidden sm:flex"><span className="font-extrabold text-emerald-900 text-lg leading-tight tracking-wide">光之街角</span><span className="text-[9px] text-emerald-600 font-bold tracking-widest uppercase">Eorzea RP Map</span></div>
             </div>
             <div className="w-px h-8 bg-slate-200 hidden lg:block"></div>
-            <div className="flex items-center bg-amber-50 rounded-xl px-3 py-2 border border-amber-200/60 shadow-sm shrink-0">
-              <select className="bg-transparent text-amber-900 text-sm font-extrabold outline-none cursor-pointer appearance-none pr-3" value={activeArea} onChange={(e) => { setActiveArea(e.target.value); setIsSubdivision(false); setIsSidebarOpen(false); setHasInteracted(true); }}>
+            <div className={`flex items-center rounded-xl px-3 py-2 border shadow-sm shrink-0 transition-all ${activeArea === '選擇住宅區' ? 'bg-slate-100 border-slate-200' : 'bg-amber-50 border-amber-200/60'}`}>
+              <select className={`bg-transparent text-sm font-extrabold outline-none cursor-pointer appearance-none pr-3 ${activeArea === '選擇住宅區' ? 'text-slate-400' : 'text-amber-900'}`} value={activeArea} onChange={(e) => { setActiveArea(e.target.value); setIsSubdivision(false); setIsSidebarOpen(false); setHasInteracted(true); }}>
+                <option value="選擇住宅區" disabled className="bg-white text-slate-400">選擇住宅區</option>
                 {HOUSING_AREAS.map(area => <option key={area} value={area} className="bg-white text-slate-800">{area}</option>)}
               </select>
-              <ChevronDown size={14} className="text-amber-500" />
+              <ChevronDown size={14} className={activeArea === '選擇住宅區' ? 'text-slate-400' : 'text-amber-500'} />
             </div>
-            <div className="flex items-center bg-white/50 rounded-xl p-1 border border-slate-200/60 shadow-sm shrink-0">
-              <button onClick={() => { setIsSubdivision(false); setIsSidebarOpen(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${!isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}>一般</button>
-              <button onClick={() => { setIsSubdivision(true); setIsSidebarOpen(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}>擴建</button>
+            <div className={`flex items-center rounded-xl p-1 border shadow-sm shrink-0 transition-all ${activeArea === '選擇住宅區' ? 'bg-slate-50/50 border-slate-100 opacity-50 pointer-events-none' : 'bg-white/50 border-slate-200/60'}`}>
+              <button onClick={() => { setIsSubdivision(false); setIsSidebarOpen(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${activeArea !== '選擇住宅區' && !isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}>一般</button>
+              <button onClick={() => { setIsSubdivision(true); setIsSidebarOpen(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${activeArea !== '選擇住宅區' && isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}>擴建</button>
             </div>
           </div>
 
