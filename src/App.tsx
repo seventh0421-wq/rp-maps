@@ -121,8 +121,15 @@ export default function App() {
                       (shop.ownerName && shop.ownerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
                       (shop.ownerId && shop.ownerId.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    // 如果有輸入搜尋文字，則忽略地區限制，顯示全服全區符合搜尋的店
+    // 如果有輸入搜尋文字，則優先顯示全服全區符合搜尋的店
     if (searchQuery.trim() !== '') {
+      // 在搜尋模式下，如果還有選標籤，則標籤也要符合
+      if (activeTag !== '全部' && activeTag !== '💖 收藏') {
+        return matchSearch && matchTag;
+      }
+      if (activeTag === '💖 收藏') {
+        return matchSearch && bookmarks.includes(shop.id);
+      }
       return matchSearch;
     }
 
@@ -218,7 +225,20 @@ export default function App() {
           <div className="flex-1 flex items-center gap-3 min-w-0">
             <div className="relative flex-1 max-w-[600px]">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input type="text" placeholder="搜尋店名、店主或標籤..." className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 transition-all shadow-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => setIsSearchFocused(true)} onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)} />
+              <input 
+                type="text" 
+                placeholder="搜尋店名、店主或標籤..." 
+                className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 transition-all shadow-sm" 
+                value={searchQuery} 
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value.trim() !== '') {
+                    setIsListViewOpen(true);
+                  }
+                }} 
+                onFocus={() => setIsSearchFocused(true)} 
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)} 
+              />
               {isSearchFocused && searchQuery.trim() !== '' && (
                 <div className="absolute top-full left-0 w-full mt-2 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-2xl overflow-hidden z-[2000] py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                   {searchSuggestions.length > 0 ? (searchSuggestions.map(shop => (
