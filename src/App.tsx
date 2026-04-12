@@ -358,7 +358,16 @@ export default function App() {
       <ShopSidebar shop={selectedShop} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onEditClick={handleEditClick} isBookmarked={selectedShop ? bookmarks.includes(selectedShop.id) : false} onToggleBookmark={toggleBookmark} isShifted={isListViewOpen} />
       
       {hasInteracted ? (
-        <InteractiveMap imageUrl={(AREA_MAPS as any)[activeArea][isSubdivision ? 'sub' : 'normal']} bounds={{ width: 1000, height: 1000 }} markers={mapMarkers} onMarkerClick={handleMarkerClick} />
+        <InteractiveMap 
+          imageUrl={
+            (AREA_MAPS as any)[activeArea] 
+              ? (AREA_MAPS as any)[activeArea][isSubdivision ? 'sub' : 'normal']
+              : null
+          } 
+          bounds={{ width: 1000, height: 1000 }} 
+          markers={mapMarkers} 
+          onMarkerClick={handleMarkerClick} 
+        />
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50/40 to-emerald-50/20 p-6 relative z-10">
           <div className="max-w-2xl w-full text-center space-y-8 animate-in fade-in zoom-in duration-700">
@@ -396,8 +405,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Random Recommend Button on Left Bottom */}
-      <div className="absolute left-6 bottom-32 z-[400] flex flex-col gap-4 pointer-events-none">
+      {/* Random Recommend Button on Right Bottom */}
+      <div className="absolute right-6 bottom-24 z-[400] flex flex-col gap-4 pointer-events-none">
         <button 
           onClick={handleRandomRecommend}
           className="pointer-events-auto group bg-white/90 backdrop-blur-xl p-4 rounded-[2rem] border border-indigo-100 shadow-xl hover:shadow-indigo-200/50 hover:-translate-y-1 transition-all flex flex-col items-center gap-2 w-20 sm:w-24"

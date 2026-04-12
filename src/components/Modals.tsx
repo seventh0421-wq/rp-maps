@@ -373,8 +373,8 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
       type: formData.tags[0], // Use first tag as primary type for backward compatibility
       id: editingShop ? editingShop.id : `shop_${Date.now()}`, 
       images: validImages, 
-      openTime: formData.openTime || undefined,
-      closeTime: formData.closeTime || undefined,
+      openTime: formData.openTime || '',
+      closeTime: formData.closeTime || '',
       socialLinks: { threads: formData.threads, discord: formData.discord, website: formData.website } 
     };
     onSubmit(submitData, !!editingShop); onClose();
