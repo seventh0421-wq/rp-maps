@@ -4,15 +4,15 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Sparkles, Coffee, ChevronDown, Tag, HelpCircle, Shield, Heart, Calendar, User, FileText, MapPin } from 'lucide-react';
+import { Plus, Search, Sparkles, Coffee, ChevronDown, Tag, HelpCircle, Shield, Heart, Calendar, User, FileText, MapPin, Map } from 'lucide-react';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
 import { auth, db, APP_ID } from './firebase';
 import { Shop, Marker } from './types';
-import { HOUSING_AREAS, SERVER_LIST, TAG_LIST, AREA_MAPS } from './constants';
+import { HOUSING_AREAS, SERVER_LIST, TAG_LIST, AREA_MAPS, RP_LEVEL_LIST } from './constants';
 import { checkIsOpen, getPlotCoordinates } from './utils';
-import { AdminLoginModal, AdminDashboard, HelpModal, DisclaimerModal, PasswordPromptModal, RegistrationModal } from './components/Modals';
+import { AdminLoginModal, AdminDashboard, HelpModal, DisclaimerModal, PasswordPromptModal, RegistrationModal, RPTutorialModal } from './components/Modals';
 import { InteractiveMap } from './components/Map';
 import { ShopSidebar } from './components/Sidebar';
 
@@ -26,6 +26,7 @@ export default function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingShop, setEditingShop] = useState<Shop | null>(null); 
   const [isHelpOpen, setIsHelpOpen] = useState(false); 
+  const [isRPTutorialOpen, setIsRPTutorialOpen] = useState(false);
   const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false); 
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
@@ -41,6 +42,7 @@ export default function App() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [recommendation, setRecommendation] = useState<Shop | null>(null);
   const [isTagsOpen, setIsTagsOpen] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -105,8 +107,17 @@ export default function App() {
     const matchSubdivision = isSubdivision ? shopIsSub : !shopIsSub; 
     const matchServer = activeServer === '所有伺服器' || shop.server === activeServer;
     if (activeTag === '💖 收藏') { return bookmarks.includes(shop.id) && matchArea && matchSubdivision && matchServer; }
-    const matchTag = activeTag === '全部' || shop.type === activeTag || (shop.tags && shop.tags.includes(activeTag));
-    const matchSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase()) || (shop.ownerId && shop.ownerId.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    let matchTag = activeTag === '全部' || shop.type === activeTag || (shop.tags && shop.tags.includes(activeTag));
+    
+    if (activeTag.startsWith('RP: ')) {
+      const level = activeTag.replace('RP: ', '');
+      matchTag = shop.rpLevels?.includes(level) || false;
+    }
+
+    const matchSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      (shop.ownerName && shop.ownerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                      (shop.ownerId && shop.ownerId.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchArea && matchSubdivision && matchServer && matchTag && matchSearch;
   });
 
@@ -115,13 +126,30 @@ export default function App() {
     return { id: shop.id, x: coords.x, y: coords.y, data: shop, isBookmarked: bookmarks.includes(shop.id) };
   });
 
-  const dynamicTags = Array.from(new Set([...TAG_LIST, ...shops.map(shop => shop.type)]));
-  const searchSuggestions = searchQuery.trim() === '' ? [] : shops.filter(shop => shop.name.toLowerCase().includes(searchQuery.toLowerCase()) || (shop.ownerId && shop.ownerId.toLowerCase().includes(searchQuery.toLowerCase())));
+  const dynamicTags = Array.from(new Set([...TAG_LIST, ...shops.map(shop => shop.type), ...RP_LEVEL_LIST.map(level => `RP: ${level}`)]));
+  const searchSuggestions = searchQuery.trim() === '' ? [] : shops.filter(shop => 
+    shop.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (shop.ownerName && shop.ownerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (shop.ownerId && shop.ownerId.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const handleSelectSuggestion = (shop: Shop) => {
+    setHasInteracted(true);
     setSearchQuery(''); setActiveServer(shop.server); setActiveArea(shop.location); setIsSubdivision(shop.isApartment ? shop.isSubdivision : shop.plot > 30); setActiveTag('全部'); setIsSearchFocused(false); handleMarkerClick(shop); 
   };
-  const handleMarkerClick = (shopData: Shop) => { setSelectedShop(shopData); setIsSidebarOpen(true); };
+
+  const handleRandomRecommend = () => {
+    if (shops.length === 0) return;
+    const openShops = shops.filter(s => checkIsOpen(s));
+    const pool = openShops.length > 0 ? openShops : shops;
+    const randomShop = pool[Math.floor(Math.random() * pool.length)];
+    handleSelectSuggestion(randomShop);
+  };
+  const handleMarkerClick = (shopData: Shop) => { 
+    setHasInteracted(true);
+    setSelectedShop(shopData); 
+    setIsSidebarOpen(true); 
+  };
   const handleShopSubmit = async (shopData: Shop, isEdit: boolean) => {
     if (!user) return;
     const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'shops', shopData.id);
@@ -135,9 +163,19 @@ export default function App() {
 
   return (
     <div className="w-full h-screen relative bg-[#f8f6f0] overflow-hidden font-sans text-slate-800">
+      {/* Global Background Image */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.3] scale-105">
+        <img 
+          src="https://i.meee.com.tw/ToAUjvt.jpg" 
+          alt="Background" 
+          className="w-full h-full object-cover blur-[1px]"
+          referrerPolicy="no-referrer"
+        />
+      </div>
       <AdminLoginModal isOpen={isAdminLoginOpen} onClose={() => setIsAdminLoginOpen(false)} onLogin={() => { setIsAdmin(true); setIsAdminLoginOpen(false); setIsAdminDashboardOpen(true); }} />
       <AdminDashboard isOpen={isAdminDashboardOpen} onClose={() => setIsAdminDashboardOpen(false)} shops={shops} onEditShop={(shop) => { setEditingShop(shop); setIsFormOpen(true); }} onDeleteShop={handleDeleteShop} />
-      <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} onOpenTutorial={() => { setIsHelpOpen(false); setIsRPTutorialOpen(true); }} />
+      <RPTutorialModal isOpen={isRPTutorialOpen} onClose={() => setIsRPTutorialOpen(false)} />
       <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
       <PasswordPromptModal isOpen={isPwdPromptOpen} onClose={() => setIsPwdPromptOpen(false)} onSubmit={handlePasswordSubmit} errorMsg={pwdErrorMsg} />
       <RegistrationModal isOpen={isFormOpen} onClose={() => { setIsFormOpen(false); setEditingShop(null); }} onSubmit={handleShopSubmit} currentArea={activeArea} editingShop={editingShop} />
@@ -146,12 +184,14 @@ export default function App() {
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-lg p-3 flex flex-wrap items-center justify-between gap-4 pointer-events-auto max-w-6xl w-full">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2.5 px-3 select-none bg-emerald-50 py-1.5 rounded-xl border border-emerald-100">
-              <div className="bg-emerald-500 p-1.5 rounded-lg text-white shadow-sm"><Coffee size={20} /></div>
+              <div className="bg-emerald-500 p-1.5 rounded-lg text-white shadow-sm">
+                <Map size={20} />
+              </div>
               <div className="flex flex-col"><span className="font-extrabold text-emerald-900 text-lg leading-tight tracking-wide">光之街角</span><span className="text-[9px] text-emerald-600 font-bold tracking-widest uppercase">Eorzea RP Map</span></div>
             </div>
             <div className="w-px h-8 bg-slate-200 hidden lg:block"></div>
             <div className="flex items-center bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-200/60 shadow-sm">
-              <select className="bg-transparent text-amber-900 text-sm font-extrabold outline-none cursor-pointer appearance-none pr-3" value={activeArea} onChange={(e) => { setActiveArea(e.target.value); setIsSubdivision(false); setIsSidebarOpen(false); }}>
+              <select className="bg-transparent text-amber-900 text-sm font-extrabold outline-none cursor-pointer appearance-none pr-3" value={activeArea} onChange={(e) => { setActiveArea(e.target.value); setIsSubdivision(false); setIsSidebarOpen(false); setHasInteracted(true); }}>
                 {HOUSING_AREAS.map(area => <option key={area} value={area} className="bg-white text-slate-800">{area}</option>)}
               </select>
               <ChevronDown size={16} className="text-amber-500" />
@@ -168,7 +208,7 @@ export default function App() {
                   {searchSuggestions.length > 0 ? (searchSuggestions.map(shop => (
                     <div key={shop.id} onMouseDown={(e) => { e.preventDefault(); handleSelectSuggestion(shop); }} className="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-100 last:border-0 flex flex-col gap-1">
                       <div className="flex justify-between items-center"><span className="font-bold text-slate-800">{shop.name}</span><span className="text-[10px] font-bold text-white bg-emerald-500 px-2 py-0.5 rounded-md">{shop.server}</span></div>
-                      <div className="text-xs text-slate-500 flex justify-between"><span className="flex items-center gap-1"><Coffee size={12}/> {shop.ownerId || '未知店主'}</span><span className="flex items-center gap-1"><MapPin size={12}/> {shop.location}</span></div>
+                      <div className="text-xs text-slate-500 flex justify-between"><span className="flex items-center gap-1"><Coffee size={12}/> {shop.ownerName || shop.ownerId || '未知店主'}</span><span className="flex items-center gap-1"><MapPin size={12}/> {shop.location}</span></div>
                     </div>
                   ))) : (<div className="px-4 py-6 text-center text-sm text-slate-500 font-bold flex flex-col items-center gap-2"><Search size={24} className="text-slate-300" />找不到符合的店鋪</div>)}
                 </div>
@@ -185,8 +225,7 @@ export default function App() {
               {activeTag !== '全部' && <span className="sm:hidden absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-amber-500 rounded-full border-2 border-white"></span>}
             </button>
             <button onClick={() => setIsHelpOpen(true)} className="p-2.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-xl" title="使用教學"><HelpCircle size={22} /></button>
-            <button onClick={() => isAdmin ? setIsAdminDashboardOpen(true) : setIsAdminLoginOpen(true)} className={`p-2.5 rounded-xl ${isAdmin ? 'text-emerald-600 bg-emerald-100' : 'text-slate-400'}`} title="後臺管理"><Shield size={22} /></button>
-            <button onClick={handleAddNewClick} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl shadow-md font-bold"><Plus size={18} strokeWidth={3} /><span className="hidden sm:inline">登記</span></button>
+            <button onClick={handleAddNewClick} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl shadow-md font-bold"><Plus size={18} strokeWidth={3} /><span className="hidden sm:inline">店面登記</span></button>
           </div>
         </div>
         {isTagsOpen && (
@@ -221,13 +260,66 @@ export default function App() {
           <div className="w-px h-3 bg-slate-300 hidden sm:block"></div>
           <div className="flex items-center gap-3 sm:gap-5">
             <button onClick={() => setIsDisclaimerOpen(true)} className="flex items-center gap-1 text-rose-500 hover:text-rose-700 font-extrabold py-0.5 px-2 bg-rose-50 rounded-lg border border-rose-100/50 transition-colors"><FileText size={14} /> 免責聲明</button>
-            <span className="flex items-center gap-1.5 whitespace-nowrap"><User size={14} className="text-sky-500" /> 作者：閻羅@奧汀</span>
+            <div className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 whitespace-nowrap"><User size={14} className="text-sky-500" /> 作者：閻羅@奧汀</span>
+              <button onClick={() => isAdmin ? setIsAdminDashboardOpen(true) : setIsAdminLoginOpen(true)} className={`p-1.5 rounded-lg transition-colors ${isAdmin ? 'text-emerald-600 bg-emerald-50' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'}`} title="後臺管理"><Shield size={14} /></button>
+            </div>
           </div>
         </div>
       </div>
 
       <ShopSidebar shop={selectedShop} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onEditClick={handleEditClick} isBookmarked={selectedShop ? bookmarks.includes(selectedShop.id) : false} onToggleBookmark={toggleBookmark} />
-      <InteractiveMap imageUrl={(AREA_MAPS as any)[activeArea][isSubdivision ? 'sub' : 'normal']} bounds={{ width: 1000, height: 1000 }} markers={mapMarkers} onMarkerClick={handleMarkerClick} />
+      
+      {hasInteracted ? (
+        <InteractiveMap imageUrl={(AREA_MAPS as any)[activeArea][isSubdivision ? 'sub' : 'normal']} bounds={{ width: 1000, height: 1000 }} markers={mapMarkers} onMarkerClick={handleMarkerClick} />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50/40 to-emerald-50/20 p-6 relative z-10">
+          <div className="max-w-2xl w-full text-center space-y-8 animate-in fade-in zoom-in duration-700">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-48 h-48 flex items-center justify-center animate-bounce-slow">
+                <img 
+                  src="https://i.meee.com.tw/GcDoF16.png" 
+                  alt="Welcome Logo" 
+                  className="w-full h-full object-contain drop-shadow-2xl"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <h1 className="text-5xl font-black text-slate-900 tracking-tight">歡迎來到光之街角</h1>
+              <p className="text-xl text-slate-500 font-medium">推開這扇門，遇見艾奧傑亞的另一種生活。</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left group cursor-pointer" onClick={() => { setHasInteracted(true); }}>
+                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 mb-4 group-hover:scale-110 transition-transform"><MapPin size={24} /></div>
+                <h3 className="font-bold text-slate-800 mb-1">選擇地區開始探索</h3>
+                <p className="text-sm text-slate-500">從上方的選單選擇您想前往的住宅區</p>
+              </div>
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left group cursor-pointer" onClick={handleRandomRecommend}>
+                <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mb-4 group-hover:scale-110 transition-transform"><Sparkles size={24} /></div>
+                <h3 className="font-bold text-slate-800 mb-1">隨機推薦一間店</h3>
+                <p className="text-sm text-slate-500">不知道去哪？讓我們為您挑選一間！</p>
+              </div>
+            </div>
+
+            <div className="pt-8">
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">請使用上方搜尋列或選擇地區以開啟地圖</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Random Recommend Button on Left */}
+      <div className="absolute left-6 top-1/2 -translate-y-1/2 z-[400] flex flex-col gap-4 pointer-events-none">
+        <button 
+          onClick={handleRandomRecommend}
+          className="pointer-events-auto group bg-white/90 backdrop-blur-xl p-4 rounded-[2rem] border border-indigo-100 shadow-xl hover:shadow-indigo-200/50 hover:-translate-y-1 transition-all flex flex-col items-center gap-2 w-20 sm:w-24"
+        >
+          <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 group-hover:rotate-12 transition-transform">
+            <Sparkles size={24} />
+          </div>
+          <span className="text-[10px] sm:text-xs font-black text-indigo-600 text-center leading-tight">隨機<br/>推薦</span>
+        </button>
+      </div>
     </div>
   );
 }

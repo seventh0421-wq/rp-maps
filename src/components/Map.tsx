@@ -62,8 +62,8 @@ export const InteractiveMap = ({ imageUrl, bounds, markers, onMarkerClick }: { i
   };
 
   return (
-    <div ref={containerRef} className={`w-full h-full overflow-hidden relative touch-none bg-[#f8f6f0] ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onWheel={handleWheel}>
-      {isLoading && (<div className="absolute inset-0 z-[50] flex flex-col items-center justify-center bg-[#f8f6f0]/80 backdrop-blur-sm"><div className="bg-white p-4 rounded-2xl shadow-xl flex flex-col items-center gap-3 animate-in zoom-in-95"><Loader2 className="w-8 h-8 text-emerald-500 animate-spin" /><span className="text-xs font-extrabold text-emerald-800 tracking-widest uppercase">載入地圖中...</span></div></div>)}
+    <div ref={containerRef} className={`w-full h-full overflow-hidden relative touch-none bg-transparent ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onWheel={handleWheel}>
+      {isLoading && (<div className="absolute inset-0 z-[50] flex flex-col items-center justify-center bg-white/40 backdrop-blur-sm"><div className="bg-white p-4 rounded-2xl shadow-xl flex flex-col items-center gap-3 animate-in zoom-in-95"><Loader2 className="w-8 h-8 text-emerald-500 animate-spin" /><span className="text-xs font-extrabold text-emerald-800 tracking-widest uppercase">載入地圖中...</span></div></div>)}
       <div className="absolute origin-top-left will-change-transform" style={{ width: bounds.width, height: bounds.height, transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}>
         <img src={imageUrl} alt="Map Background" onLoad={() => setIsLoading(false)} className={`w-full h-full object-contain pointer-events-none transition-opacity duration-700 ${isLoading ? 'opacity-0' : 'opacity-100'}`} draggable={false} />
         {!isLoading && markers.map(marker => {

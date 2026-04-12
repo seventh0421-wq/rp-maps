@@ -5,7 +5,8 @@
 
 export const HOUSING_AREAS = ['薰衣草苗圃', '海霧村', '高腳孤丘', '穹頂皓天', '白銀鄉'];
 export const SERVER_LIST = ['所有伺服器', '鳳凰', '利維坦', '迦樓羅', '伊弗利特', '巴哈姆特', '奧汀', '泰坦'];
-export const TAG_LIST = ['全部', '咖啡廳', '酒吧', '照相館', '賭場', '診所', '劇團'];
+export const TAG_LIST = ['全部', '咖啡廳', '酒吧', '賭場', '診所', '劇團'];
+export const RP_LEVEL_LIST = ['無', '輕', '中', '重'];
 export const DAYS_OF_WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 
 export const AREA_MAPS = {

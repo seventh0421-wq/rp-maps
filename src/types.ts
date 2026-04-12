@@ -6,6 +6,7 @@
 export interface Shop {
   id: string;
   name: string;
+  ownerName: string;
   type: string;
   customType?: string;
   server: string;
@@ -20,6 +21,7 @@ export interface Shop {
   description: string;
   images: string[];
   tags: string[];
+  rpLevels: string[];
   socialLinks?: {
     twitter?: string;
     discord?: string;
