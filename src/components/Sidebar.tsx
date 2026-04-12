@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { X, Heart, Edit3, Globe, MapPin, Clock, MessageSquare, Twitter, MessageCircle, Link as LinkIcon, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { X, Heart, Edit3, Globe, MapPin, Clock, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Shop } from '../types';
 import { checkIsOpen } from '../utils';
 import { DAYS_OF_WEEK } from '../constants';
@@ -113,7 +113,7 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
           </div>
           <div className="h-px bg-slate-200 w-full my-1 shrink-0"></div>
           <div className="shrink-0"><h3 className="text-sm font-bold text-emerald-700 mb-3 flex items-center gap-2"><MessageSquare size={18} className="text-emerald-500"/> 店鋪介紹</h3><p className="text-sm text-slate-700 leading-relaxed bg-white p-5 rounded-2xl border border-slate-200 shadow-sm whitespace-pre-wrap font-medium">{shop.description}</p></div>
-          {shop.socialLinks && (shop.socialLinks.twitter || shop.socialLinks.discord || shop.socialLinks.website) && (<div className="shrink-0 flex gap-3 mt-2">{shop.socialLinks.twitter && (<a href={shop.socialLinks.twitter} target="_blank" rel="noreferrer" className="flex-1 flex justify-center items-center gap-2 bg-[#1DA1F2]/10 text-[#1DA1F2] py-2.5 rounded-xl text-sm"><Twitter size={18} /> Twitter</a>)}{shop.socialLinks.discord && (<a href={shop.socialLinks.discord} target="_blank" rel="noreferrer" className="flex-1 flex justify-center items-center gap-2 bg-[#5865F2]/10 text-[#5865F2] py-2.5 rounded-xl text-sm"><MessageCircle size={18} /> Discord</a>)}{shop.socialLinks.website && (<a href={shop.socialLinks.website} target="_blank" rel="noreferrer" className="flex-1 flex justify-center items-center gap-2 bg-emerald-50 text-emerald-600 py-2.5 rounded-xl text-sm"><LinkIcon size={18} /> 網站</a>)}</div>)}
+          {shop.socialLinks && (shop.socialLinks.threads || shop.socialLinks.discord || shop.socialLinks.website) && (<div className="shrink-0 flex gap-3 mt-2">{shop.socialLinks.threads && (<a href={shop.socialLinks.threads} target="_blank" rel="noreferrer" className="flex-1 flex justify-center items-center gap-2 bg-slate-900/10 text-slate-900 py-2.5 rounded-xl text-sm"><AtSign size={18} /> Threads</a>)}{shop.socialLinks.discord && (<a href={shop.socialLinks.discord} target="_blank" rel="noreferrer" className="flex-1 flex justify-center items-center gap-2 bg-[#5865F2]/10 text-[#5865F2] py-2.5 rounded-xl text-sm"><MessageCircle size={18} /> Discord</a>)}{shop.socialLinks.website && (<a href={shop.socialLinks.website} target="_blank" rel="noreferrer" className="flex-1 flex justify-center items-center gap-2 bg-emerald-50 text-emerald-600 py-2.5 rounded-xl text-sm"><LinkIcon size={18} /> 網站</a>)}</div>)}
         </div>
       </div>
     </div>

@@ -25,7 +25,7 @@ export interface Shop {
   tags: string[];
   rpLevels: string[];
   socialLinks?: {
-    twitter?: string;
+    threads?: string;
     discord?: string;
     website?: string;
   };
