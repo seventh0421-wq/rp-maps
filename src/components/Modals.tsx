@@ -554,3 +554,56 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
     </div>
   );
 };
+
+export const RegistrationSuccessModal = ({ isOpen, onClose, shopName, ownerName }: { isOpen: boolean, onClose: () => void, shopName: string, ownerName: string }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="absolute inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-300 border-4 border-emerald-500/20">
+        <div className="p-8 text-center bg-gradient-to-b from-emerald-50 to-white">
+          <div className="w-20 h-20 bg-emerald-500 rounded-3xl flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-emerald-500/40 animate-bounce-slow">
+            <Sparkles size={40} />
+          </div>
+          <h2 className="text-3xl font-black text-slate-800 mb-2">登記成功！</h2>
+          <p className="text-emerald-600 font-bold tracking-widest uppercase text-xs mb-6">恭喜您的店面已加入光之街角</p>
+          
+          <div className="bg-slate-50 rounded-2xl p-4 mb-8 border border-slate-100 text-left">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+              <span className="text-sm font-bold text-slate-500">店名：</span>
+              <span className="text-sm font-black text-slate-800">{shopName}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-sky-500"></div>
+              <span className="text-sm font-bold text-slate-500">店主：</span>
+              <span className="text-sm font-black text-slate-800">{ownerName}</span>
+            </div>
+          </div>
+
+          <div className="space-y-4 text-left">
+            <h4 className="font-black text-slate-800 flex items-center gap-2">
+              <Search size={18} className="text-amber-500" /> 如何找到您的店？
+            </h4>
+            <ul className="space-y-3">
+              <li className="flex gap-3 items-start">
+                <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">1</div>
+                <p className="text-sm text-slate-600 leading-relaxed font-medium">在上方搜尋框輸入您的 <span className="text-emerald-600 font-bold">店名</span> 或 <span className="text-emerald-600 font-bold">店主名稱</span>。</p>
+              </li>
+              <li className="flex gap-3 items-start">
+                <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">2</div>
+                <p className="text-sm text-slate-600 leading-relaxed font-medium">切換至正確的 <span className="text-amber-600 font-bold">住宅區</span> 與 <span className="text-amber-600 font-bold">一般/擴建</span> 區塊。</p>
+              </li>
+              <li className="flex gap-3 items-start">
+                <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">3</div>
+                <p className="text-sm text-slate-600 leading-relaxed font-medium">點擊右側的 <span className="text-sky-600 font-bold">列表按鈕</span> 即可在清單中快速找到。</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-center">
+          <button onClick={onClose} className="w-full py-4 rounded-2xl bg-emerald-500 text-white font-black hover:bg-emerald-600 shadow-xl shadow-emerald-500/30 transition-all active:scale-95">開始探索</button>
+        </div>
+      </div>
+    </div>
+  );
+};

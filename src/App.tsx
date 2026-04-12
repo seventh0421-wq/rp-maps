@@ -12,7 +12,7 @@ import { auth, db, APP_ID } from './firebase';
 import { Shop, Marker } from './types';
 import { HOUSING_AREAS, SERVER_LIST, TAG_LIST, AREA_MAPS, RP_LEVEL_LIST } from './constants';
 import { checkIsOpen, getPlotCoordinates } from './utils';
-import { AdminLoginModal, AdminDashboard, HelpModal, DisclaimerModal, PasswordPromptModal, RegistrationModal, RPTutorialModal } from './components/Modals';
+import { AdminLoginModal, AdminDashboard, HelpModal, DisclaimerModal, PasswordPromptModal, RegistrationModal, RPTutorialModal, RegistrationSuccessModal } from './components/Modals';
 import { InteractiveMap } from './components/Map';
 import { ShopSidebar } from './components/Sidebar';
 import { ShopList } from './components/ShopList';
@@ -44,6 +44,8 @@ export default function App() {
   const [recommendation, setRecommendation] = useState<Shop | null>(null);
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [isListViewOpen, setIsListViewOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [registeredShop, setRegisteredShop] = useState<Shop | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
@@ -178,8 +180,33 @@ export default function App() {
   const handleShopSubmit = async (shopData: Shop, isEdit: boolean) => {
     if (!user) return;
     const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'shops', shopData.id);
-    try { await setDoc(docRef, shopData); if (isEdit && !isAdminDashboardOpen) { setSelectedShop(shopData); } setEditingShop(null); if (!isAdminDashboardOpen && !isEdit) { setActiveServer(shopData.server); setActiveArea(shopData.location); setIsSubdivision(shopData.isApartment ? shopData.isSubdivision : shopData.plot > 30); setActiveTag('全部'); } } 
-    catch (error) { console.error("儲存店面失敗:", error); }
+    try { 
+      await setDoc(docRef, shopData); 
+      setEditingShop(null);
+      
+      if (isEdit) {
+        if (!isAdminDashboardOpen) {
+          setSelectedShop(shopData);
+          setIsSidebarOpen(true);
+        }
+      } else {
+        // New registration
+        setRegisteredShop(shopData);
+        setIsSuccessModalOpen(true);
+        
+        if (!isAdminDashboardOpen) {
+          setActiveServer(shopData.server);
+          setActiveArea(shopData.location);
+          setIsSubdivision(shopData.isApartment ? shopData.isSubdivision : shopData.plot > 30);
+          setActiveTag('全部');
+          setSelectedShop(shopData);
+          setIsSidebarOpen(true);
+          setHasInteracted(true);
+        }
+      }
+    } catch (error) { 
+      console.error("儲存店面失敗:", error); 
+    }
   };
   const handleDeleteShop = async (shopId: string) => { if (!user) return; try { await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'shops', shopId)); if (selectedShop?.id === shopId) setIsSidebarOpen(false); } catch (error) { console.error("刪除店面失敗:", error); } };
   const handleAddNewClick = () => { setEditingShop(null); setIsFormOpen(true); };
@@ -201,6 +228,7 @@ export default function App() {
       <AdminDashboard isOpen={isAdminDashboardOpen} onClose={() => setIsAdminDashboardOpen(false)} shops={shops} onEditShop={(shop) => { setEditingShop(shop); setIsFormOpen(true); }} onDeleteShop={handleDeleteShop} />
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} onOpenTutorial={() => { setIsHelpOpen(false); setIsRPTutorialOpen(true); }} />
       <RPTutorialModal isOpen={isRPTutorialOpen} onClose={() => setIsRPTutorialOpen(false)} />
+      <RegistrationSuccessModal isOpen={isSuccessModalOpen} onClose={() => setIsSuccessModalOpen(false)} shopName={registeredShop?.name || ''} ownerName={registeredShop?.ownerName || ''} />
       <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
       <PasswordPromptModal isOpen={isPwdPromptOpen} onClose={() => setIsPwdPromptOpen(false)} onSubmit={handlePasswordSubmit} errorMsg={pwdErrorMsg} />
       <RegistrationModal isOpen={isFormOpen} onClose={() => { setIsFormOpen(false); setEditingShop(null); }} onSubmit={handleShopSubmit} currentArea={activeArea} editingShop={editingShop} />
