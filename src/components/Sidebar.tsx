@@ -9,7 +9,7 @@ import { Shop } from '../types';
 import { checkIsOpen } from '../utils';
 import { DAYS_OF_WEEK } from '../constants';
 
-export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, onToggleBookmark }: { shop: Shop | null, isOpen: boolean, onClose: () => void, onEditClick: (shop: Shop) => void, isBookmarked: boolean, onToggleBookmark: (id: string) => void }) => {
+export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, onToggleBookmark, isShifted }: { shop: Shop | null, isOpen: boolean, onClose: () => void, onEditClick: (shop: Shop) => void, isBookmarked: boolean, onToggleBookmark: (id: string) => void, isShifted?: boolean }) => {
   const [currentImgIndex, setCurrentImgIndex] = React.useState(0);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -40,7 +40,7 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
   };
 
   return (
-    <div className={`absolute z-[1000] transform transition-transform duration-300 ease-in-out pointer-events-none flex flex-col top-0 left-0 h-full w-full sm:top-[96px] sm:left-6 sm:h-auto sm:max-h-[calc(100vh-120px)] sm:w-[400px] ${isOpen ? 'translate-x-0' : '-translate-x-full sm:-translate-x-[calc(100%+24px)]'}`}>
+    <div className={`absolute z-[1000] transform transition-all duration-300 ease-in-out pointer-events-none flex flex-col top-0 left-0 h-full w-full sm:top-[96px] sm:h-auto sm:max-h-[calc(100vh-120px)] sm:w-[400px] ${isShifted ? 'sm:left-[370px]' : 'sm:left-6'} ${isOpen ? 'translate-x-0' : '-translate-x-full sm:-translate-x-[calc(100%+400px)]'}`}>
       <div className="w-full h-full sm:h-auto sm:max-h-[calc(100vh-120px)] bg-white/95 backdrop-blur-2xl sm:rounded-[2rem] sm:border border-slate-200 shadow-2xl flex flex-col text-slate-800 overflow-hidden pointer-events-auto relative">
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
           <button onClick={() => onToggleBookmark(shop.id)} className={`p-2 backdrop-blur-md rounded-full shadow-lg transition-all ${isBookmarked ? 'bg-pink-500 text-white' : 'bg-white/90 text-pink-500'}`} title={isBookmarked ? "取消收藏" : "加入收藏"}><Heart size={18} fill={isBookmarked ? "currentColor" : "none"} /></button>

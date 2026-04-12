@@ -69,7 +69,16 @@ export const InteractiveMap = ({ imageUrl, bounds, markers, onMarkerClick }: { i
         {!isLoading && markers.map(marker => {
           const isOpen = checkIsOpen(marker.data);
           return (
-            <div key={marker.id} className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-125 transition-transform origin-bottom z-10" style={{ left: marker.x, top: marker.y }} onClick={(e) => { e.stopPropagation(); onMarkerClick(marker.data); }}>
+            <div 
+              key={marker.id} 
+              className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-125 transition-transform origin-bottom z-10" 
+              style={{ left: marker.x, top: marker.y }} 
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                onMarkerClick(marker.data); 
+              }}
+            >
               <div style={{ filter: 'drop-shadow(0px 6px 6px rgba(0,0,0,0.4))' }} className="relative">
                 {marker.isBookmarked && (<div className="absolute -top-1 -left-2 z-30 bg-pink-500 rounded-full p-1 border-2 border-white shadow-md"><div className="w-2.5 h-2.5 bg-white rounded-full flex items-center justify-center"><div className="w-1.5 h-1.5 bg-pink-500 rounded-full"></div></div></div>)}
                 {isOpen && (<span className="absolute -top-1 -right-1 flex h-4 w-4 z-20"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white"></span></span>)}

@@ -15,6 +15,7 @@ import { checkIsOpen, getPlotCoordinates } from './utils';
 import { AdminLoginModal, AdminDashboard, HelpModal, DisclaimerModal, PasswordPromptModal, RegistrationModal, RPTutorialModal } from './components/Modals';
 import { InteractiveMap } from './components/Map';
 import { ShopSidebar } from './components/Sidebar';
+import { ShopList } from './components/ShopList';
 
 export default function App() {
   const [user, setUser] = useState<any>(null); 
@@ -42,6 +43,7 @@ export default function App() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [recommendation, setRecommendation] = useState<Shop | null>(null);
   const [isTagsOpen, setIsTagsOpen] = useState(false);
+  const [isListViewOpen, setIsListViewOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
@@ -118,6 +120,17 @@ export default function App() {
     const matchSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                       (shop.ownerName && shop.ownerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
                       (shop.ownerId && shop.ownerId.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    // 如果有輸入搜尋文字，則忽略地區限制，顯示全服全區符合搜尋的店
+    if (searchQuery.trim() !== '') {
+      return matchSearch;
+    }
+
+    // 如果正在使用標籤篩選且列表開啟，則列表顯示「全服全區」符合標籤的店
+    if (activeTag !== '全部' && isListViewOpen) {
+      return matchTag && matchSearch;
+    }
+
     return matchArea && matchSubdivision && matchServer && matchTag && matchSearch;
   });
 
@@ -181,28 +194,31 @@ export default function App() {
       <RegistrationModal isOpen={isFormOpen} onClose={() => { setIsFormOpen(false); setEditingShop(null); }} onSubmit={handleShopSubmit} currentArea={activeArea} editingShop={editingShop} />
 
       <div className="absolute top-0 left-0 w-full z-[500] p-4 flex flex-col items-center gap-3 pointer-events-none">
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-lg p-3 flex flex-wrap items-center justify-between gap-4 pointer-events-auto max-w-6xl w-full">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2.5 px-3 select-none bg-emerald-50 py-1.5 rounded-xl border border-emerald-100">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-lg p-3 flex items-center justify-between gap-4 pointer-events-auto max-w-[1000px] w-full overflow-hidden">
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2.5 px-3 select-none bg-emerald-50 py-1.5 rounded-xl border border-emerald-100 shrink-0">
               <div className="bg-emerald-500 p-1.5 rounded-lg text-white shadow-sm">
                 <Map size={20} />
               </div>
-              <div className="flex flex-col"><span className="font-extrabold text-emerald-900 text-lg leading-tight tracking-wide">光之街角</span><span className="text-[9px] text-emerald-600 font-bold tracking-widest uppercase">Eorzea RP Map</span></div>
+              <div className="flex flex-col hidden sm:flex"><span className="font-extrabold text-emerald-900 text-lg leading-tight tracking-wide">光之街角</span><span className="text-[9px] text-emerald-600 font-bold tracking-widest uppercase">Eorzea RP Map</span></div>
             </div>
             <div className="w-px h-8 bg-slate-200 hidden lg:block"></div>
-            <div className="flex items-center bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-200/60 shadow-sm">
+            <div className="flex items-center bg-amber-50 rounded-xl px-3 py-2 border border-amber-200/60 shadow-sm shrink-0">
               <select className="bg-transparent text-amber-900 text-sm font-extrabold outline-none cursor-pointer appearance-none pr-3" value={activeArea} onChange={(e) => { setActiveArea(e.target.value); setIsSubdivision(false); setIsSidebarOpen(false); setHasInteracted(true); }}>
                 {HOUSING_AREAS.map(area => <option key={area} value={area} className="bg-white text-slate-800">{area}</option>)}
               </select>
-              <ChevronDown size={16} className="text-amber-500" />
+              <ChevronDown size={14} className="text-amber-500" />
             </div>
-            <div className="flex items-center bg-white/50 rounded-xl p-1 border border-slate-200/60 shadow-sm">
-              <button onClick={() => { setIsSubdivision(false); setIsSidebarOpen(false); }} className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${!isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}>一般</button>
-              <button onClick={() => { setIsSubdivision(true); setIsSidebarOpen(false); }} className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}>擴建</button>
+            <div className="flex items-center bg-white/50 rounded-xl p-1 border border-slate-200/60 shadow-sm shrink-0">
+              <button onClick={() => { setIsSubdivision(false); setIsSidebarOpen(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${!isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}>一般</button>
+              <button onClick={() => { setIsSubdivision(true); setIsSidebarOpen(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}>擴建</button>
             </div>
-            <div className="relative flex-1 min-w-[200px]">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input type="text" placeholder="搜尋店名或店主 ID..." className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 transition-all shadow-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => setIsSearchFocused(true)} onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)} />
+          </div>
+
+          <div className="flex-1 flex items-center gap-3 min-w-0">
+            <div className="relative flex-1 max-w-[600px]">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input type="text" placeholder="搜尋店名、店主或標籤..." className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 transition-all shadow-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => setIsSearchFocused(true)} onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)} />
               {isSearchFocused && searchQuery.trim() !== '' && (
                 <div className="absolute top-full left-0 w-full mt-2 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-2xl overflow-hidden z-[2000] py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                   {searchSuggestions.length > 0 ? (searchSuggestions.map(shop => (
@@ -215,27 +231,28 @@ export default function App() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <select className="bg-white text-slate-700 text-sm font-bold rounded-xl px-4 py-2.5 border border-slate-200 hidden sm:block" value={activeServer} onChange={(e) => { setActiveServer(e.target.value); setIsSidebarOpen(false); }}>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <select className="bg-white text-slate-700 text-xs font-bold rounded-xl px-3 py-2 border border-slate-200 hidden xl:block" value={activeServer} onChange={(e) => { setActiveServer(e.target.value); setIsSidebarOpen(false); }}>
               {SERVER_LIST.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <button onClick={() => setIsTagsOpen(!isTagsOpen)} className={`relative flex items-center gap-1.5 p-2.5 sm:px-3 sm:py-2.5 rounded-xl border transition-all ${isTagsOpen || activeTag !== '全部' ? 'bg-amber-50 border-amber-200 text-amber-600 shadow-sm' : 'bg-transparent border-transparent text-slate-400 hover:text-amber-500'}`} title="店鋪類型篩選">
-              <Tag size={22} />
+            <button onClick={() => setIsTagsOpen(!isTagsOpen)} className={`relative flex items-center gap-1.5 p-2 rounded-xl border transition-all shrink-0 ${isTagsOpen || activeTag !== '全部' ? 'bg-amber-50 border-amber-200 text-amber-600 shadow-sm' : 'bg-transparent border-transparent text-slate-400 hover:text-amber-500'}`} title="店鋪類型篩選">
+              <Tag size={20} />
               {activeTag !== '全部' && <span className="text-xs font-extrabold hidden sm:inline-block">{activeTag}</span>}
-              {activeTag !== '全部' && <span className="sm:hidden absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-amber-500 rounded-full border-2 border-white"></span>}
             </button>
-            <button onClick={() => setIsHelpOpen(true)} className="p-2.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-xl" title="使用教學"><HelpCircle size={22} /></button>
-            <button onClick={handleAddNewClick} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl shadow-md font-bold"><Plus size={18} strokeWidth={3} /><span className="hidden sm:inline">店面登記</span></button>
+            <button onClick={() => { setIsListViewOpen(!isListViewOpen); setIsSidebarOpen(false); }} className={`p-2 rounded-xl border transition-all shrink-0 ${isListViewOpen ? 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-sm' : 'bg-transparent border-transparent text-slate-400 hover:text-emerald-500'}`} title="開啟店面列表"><FileText size={20} /></button>
+            <button onClick={() => setIsHelpOpen(true)} className="p-2 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-xl shrink-0" title="使用教學"><HelpCircle size={20} /></button>
+            <button onClick={handleAddNewClick} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl shadow-md font-bold shrink-0 text-sm"><Plus size={16} strokeWidth={3} /><span className="hidden md:inline">店面登記</span></button>
           </div>
         </div>
         {isTagsOpen && (
           <div className="flex gap-2.5 overflow-x-auto no-scrollbar max-w-full px-4 py-1 mt-1 animate-in fade-in slide-in-from-top-2 duration-200 pointer-events-auto">
-            <button onClick={() => { setActiveTag('💖 收藏'); setIsSidebarOpen(false); }} className={`px-5 py-2 rounded-full text-xs font-extrabold transition-all border shadow-sm whitespace-nowrap flex items-center gap-1.5 ${activeTag === '💖 收藏' ? 'bg-pink-500 border-pink-500 text-white transform scale-105' : 'bg-white/90 text-slate-500 hover:text-pink-500'}`}>
+            <button onClick={() => { setActiveTag(activeTag === '💖 收藏' ? '全部' : '💖 收藏'); setIsSidebarOpen(false); }} className={`px-5 py-2 rounded-full text-xs font-extrabold transition-all border shadow-sm whitespace-nowrap flex items-center gap-1.5 ${activeTag === '💖 收藏' ? 'bg-pink-500 border-pink-500 text-white transform scale-105' : 'bg-white/90 text-slate-500 hover:text-pink-500'}`}>
               <Heart size={14} fill={activeTag === '💖 收藏' ? "currentColor" : "none"} className={activeTag === '💖 收藏' ? "" : "text-pink-400"} />
               我的收藏 ({bookmarks.length})
             </button>
             {dynamicTags.map(tag => (
-              <button key={tag} onClick={() => { setActiveTag(tag); setIsSidebarOpen(false); }} className={`px-5 py-2 rounded-full text-xs font-extrabold transition-all border shadow-sm whitespace-nowrap ${activeTag === tag ? 'bg-amber-500 border-amber-500 text-white transform scale-105' : 'bg-white/90 text-slate-500 hover:text-amber-600'}`}>{tag}</button>
+              <button key={tag} onClick={() => { setActiveTag(activeTag === tag ? '全部' : tag); setIsSidebarOpen(false); setIsListViewOpen(true); }} className={`px-5 py-2 rounded-full text-xs font-extrabold transition-all border shadow-sm whitespace-nowrap ${activeTag === tag ? 'bg-amber-500 border-amber-500 text-white transform scale-105' : 'bg-white/90 text-slate-500 hover:text-amber-600'}`}>{tag}</button>
             ))}
           </div>
         )}
@@ -268,7 +285,23 @@ export default function App() {
         </div>
       </div>
 
-      <ShopSidebar shop={selectedShop} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onEditClick={handleEditClick} isBookmarked={selectedShop ? bookmarks.includes(selectedShop.id) : false} onToggleBookmark={toggleBookmark} />
+      {isListViewOpen && (
+        <ShopList 
+          shops={filteredShops} 
+          activeTag={activeTag} 
+          onClose={() => setIsListViewOpen(false)} 
+          onShopClick={(shop) => {
+            setActiveServer(shop.server);
+            setActiveArea(shop.location);
+            setIsSubdivision(shop.isApartment ? shop.isSubdivision : shop.plot > 30);
+            handleMarkerClick(shop);
+            // On mobile, close list when opening sidebar
+            if (window.innerWidth < 640) setIsListViewOpen(false);
+          }} 
+        />
+      )}
+
+      <ShopSidebar shop={selectedShop} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onEditClick={handleEditClick} isBookmarked={selectedShop ? bookmarks.includes(selectedShop.id) : false} onToggleBookmark={toggleBookmark} isShifted={isListViewOpen} />
       
       {hasInteracted ? (
         <InteractiveMap imageUrl={(AREA_MAPS as any)[activeArea][isSubdivision ? 'sub' : 'normal']} bounds={{ width: 1000, height: 1000 }} markers={mapMarkers} onMarkerClick={handleMarkerClick} />
@@ -309,8 +342,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Random Recommend Button on Left */}
-      <div className="absolute left-6 top-1/2 -translate-y-1/2 z-[400] flex flex-col gap-4 pointer-events-none">
+      {/* Random Recommend Button on Left Bottom */}
+      <div className="absolute left-6 bottom-32 z-[400] flex flex-col gap-4 pointer-events-none">
         <button 
           onClick={handleRandomRecommend}
           className="pointer-events-auto group bg-white/90 backdrop-blur-xl p-4 rounded-[2rem] border border-indigo-100 shadow-xl hover:shadow-indigo-200/50 hover:-translate-y-1 transition-all flex flex-col items-center gap-2 w-20 sm:w-24"

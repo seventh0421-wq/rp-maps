@@ -153,7 +153,7 @@ export const HelpModal = ({ isOpen, onClose, onOpenTutorial }: { isOpen: boolean
           <div className="flex items-start gap-4"><div className="p-2.5 bg-emerald-100 rounded-xl text-emerald-600 shrink-0 shadow-sm border border-emerald-200/50"><Sparkles size={20} /></div><div><h4 className="font-bold text-slate-800 mb-1">營業中即時燈號</h4><p className="text-sm text-slate-600 leading-relaxed">圖釘右上角若亮起「<span className="text-emerald-500 font-bold">閃爍的綠燈</span>」，代表該店鋪現在正在營業中！</p></div></div>
           <div className="flex items-start gap-4"><div className="p-2.5 bg-amber-100 rounded-xl text-amber-600 shrink-0 shadow-sm border border-amber-200/50"><Search size={20} /></div><div><h4 className="font-bold text-slate-800 mb-1">尋找特定店鋪</h4><p className="text-sm text-slate-600 leading-relaxed">使用上方的導覽列切換住宅區、伺服器，點擊標籤分類，或直接搜尋店名與店主 ID。</p></div></div>
           <div className="flex items-start gap-4"><div className="p-2.5 bg-indigo-100 rounded-xl text-indigo-600 shrink-0 shadow-sm border border-indigo-200/50"><Info size={20} /></div><div><h4 className="font-bold text-slate-800 mb-1">RP 是什麼？</h4><p className="text-sm text-slate-600 leading-relaxed">不清楚什麼是 RP 嗎？點擊下方的按鈕查看 RP 小教學！</p><button onClick={onOpenTutorial} className="mt-2 px-4 py-1.5 bg-indigo-500 text-white text-xs font-bold rounded-lg hover:bg-indigo-600 transition-colors shadow-sm">查看 RP 小教學</button></div></div>
-          <div className="flex items-start gap-4"><div className="p-2.5 bg-rose-100 rounded-xl text-rose-600 shrink-0 shadow-sm border border-rose-200/50"><Edit3 size={20} /></div><div><h4 className="font-bold text-slate-800 mb-1">登記與修改店面</h4><p className="text-sm text-slate-600 leading-relaxed">點擊右上角「登記」即可新增店鋪。若需修改資訊，點擊資訊卡右上角的編輯按鈕並「<span className="font-bold text-rose-500">輸入您的專屬密碼</span>」即可修改。</p>
+          <div className="flex items-start gap-4"><div className="p-2.5 bg-rose-100 rounded-xl text-rose-600 shrink-0 shadow-sm border border-rose-200/50"><Edit3 size={20} /></div><div><h4 className="font-bold text-slate-800 mb-1">店面登記與修改</h4><p className="text-sm text-slate-600 leading-relaxed">點擊右上角「店面登記」即可新增店鋪。若需修改資訊，點擊資訊卡右上角的編輯按鈕並「<span className="font-bold text-rose-500">輸入您的專屬密碼</span>」即可修改。</p>
           <div className="mt-2 p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-2"><AlertTriangle size={16} className="text-rose-500 shrink-0 mt-0.5" /><p className="text-xs text-rose-700 font-bold leading-relaxed">提醒店主：若當日實際營業時間與登記時間不同，請務必於社群或 Discord 提前公告，以免客人向隅哦！</p></div>
           </div></div>
           <div className="flex items-start gap-4"><div className="p-2.5 bg-pink-100 rounded-xl text-pink-600 shrink-0 shadow-sm border border-pink-200/50"><Heart size={20} /></div><div><h4 className="font-bold text-slate-800 mb-1">收藏愛店</h4><p className="text-sm text-slate-600 leading-relaxed">在店鋪資訊卡右上角點擊愛心收藏，下次打開標籤就能快速找到你的專屬清單！</p></div></div>
@@ -383,7 +383,7 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
   return (
     <div className="absolute inset-0 z-[4500] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
       <div className="bg-white/95 border border-slate-200 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
-        <div className={`p-5 border-b border-slate-100 flex justify-between items-center ${isEditing ? 'bg-amber-50' : 'bg-emerald-50'}`}><h2 className={`text-xl font-bold flex items-center gap-2 ${isEditing ? 'text-amber-800' : 'text-emerald-800'}`}>{isEditing ? <Edit3 size={20} /> : <MapPin size={20} />}{isEditing ? `編輯店面：${editingShop?.name}` : `登記新店面`}</h2><button onClick={onClose} className="text-slate-400 hover:text-slate-700 bg-white p-1 rounded-full shadow-sm"><X size={20} /></button></div>
+        <div className={`p-5 border-b border-slate-100 flex justify-between items-center ${isEditing ? 'bg-amber-50' : 'bg-emerald-50'}`}><h2 className={`text-xl font-bold flex items-center gap-2 ${isEditing ? 'text-amber-800' : 'text-emerald-800'}`}>{isEditing ? <Edit3 size={20} /> : <MapPin size={20} />}{isEditing ? `編輯店面：${editingShop?.name}` : `店面登記`}</h2><button onClick={onClose} className="text-slate-400 hover:text-slate-700 bg-white p-1 rounded-full shadow-sm"><X size={20} /></button></div>
         <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar">
           <form id="shop-form" onSubmit={handleSubmit} className="flex flex-col gap-5 text-slate-700">
             <div className="flex gap-4">
@@ -434,7 +434,7 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
             <div className="bg-slate-100/50 p-4 rounded-2xl border border-slate-200 flex flex-col gap-4"><div className="flex gap-4"><div className="flex-1"><label className="block text-base font-bold text-slate-600 mb-1">住宅區</label><select className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:border-emerald-500" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})}>{HOUSING_AREAS.map(area => <option key={area} value={area}>{area}</option>)}</select></div><div className="flex-1"><label className="block text-base font-bold text-slate-600 mb-1">第幾區</label><input required type="number" min="1" max="30" className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:border-emerald-500" value={formData.ward} onChange={e => setFormData({...formData, ward: e.target.value === '' ? 1 : parseInt(e.target.value)})} /></div></div><div className="flex gap-4 items-end"><div className="flex-1"><label className="block text-base font-bold text-slate-600 mb-1">{formData.isApartment ? '房間號碼' : '番地'}</label><input required type="number" min="1" max={formData.isApartment ? 999 : 60} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:border-emerald-500" value={formData.plot} onChange={e => setFormData({...formData, plot: e.target.value === '' ? 1 : parseInt(e.target.value)})} /></div><div className="flex-1 flex flex-col gap-2"><label className="flex items-center gap-2 text-base font-bold text-slate-700 cursor-pointer bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm transition-colors hover:bg-slate-50"><input type="checkbox" checked={formData.isApartment} onChange={e => setFormData({...formData, isApartment: e.target.checked})} className="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-500" />🏢 位於公寓大樓</label></div></div>{formData.isApartment && (<div className="flex gap-4 animate-in fade-in slide-in-from-top-1"><div className="flex-1"><label className="block text-base font-bold text-slate-600 mb-1">公寓大樓位置</label><select className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:border-emerald-500" value={formData.isSubdivision ? 'sub' : 'normal'} onChange={e => setFormData({...formData, isSubdivision: e.target.value === 'sub'})}><option value="normal">一般區大樓</option><option value="sub">擴建區大樓</option></select></div></div>)}</div>
             <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
               <div className="flex justify-between items-center mb-1">
-                <label className="block text-base font-bold text-amber-800">營業時間 (選填)</label>
+                <label className="block text-base font-bold text-amber-800">營業時間 (24小時制 / 選填)</label>
                 <button 
                   type="button" 
                   onClick={() => setFormData({ ...formData, isClosedThisWeek: !formData.isClosedThisWeek })}
@@ -448,9 +448,65 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
                 <>
                   <div className="flex gap-1 mb-3">{DAYS_OF_WEEK.map((day, idx) => (<button type="button" key={day} onClick={() => toggleDay(idx)} className={`flex-1 py-1.5 rounded-lg text-sm font-bold transition-all border ${formData.openDays.includes(idx) ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-white text-slate-400 border-slate-200'}`}>{day}</button>))}</div>
                   <div className="flex items-center gap-2">
-                    <input type="time" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-amber-500" value={formData.openTime} onChange={e => setFormData({...formData, openTime: e.target.value})} />
-                    <span className="text-slate-400 font-bold">~</span>
-                    <input type="time" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-amber-500" value={formData.closeTime} onChange={e => setFormData({...formData, closeTime: e.target.value})} />
+                    <div className="flex-1">
+                      <p className="text-[10px] text-slate-400 font-bold mb-1 ml-1">開始時間 (24小時制)</p>
+                      <div className="flex gap-1">
+                        <select 
+                          className="flex-1 bg-white border border-slate-200 rounded-xl px-2 py-2 outline-none focus:border-amber-500 text-sm font-bold"
+                          value={formData.openTime.split(':')[0]}
+                          onChange={e => {
+                            const mins = formData.openTime.split(':')[1] || '00';
+                            setFormData({...formData, openTime: `${e.target.value}:${mins}`});
+                          }}
+                        >
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')} 點</option>
+                          ))}
+                        </select>
+                        <select 
+                          className="flex-1 bg-white border border-slate-200 rounded-xl px-2 py-2 outline-none focus:border-amber-500 text-sm font-bold"
+                          value={formData.openTime.split(':')[1]}
+                          onChange={e => {
+                            const hours = formData.openTime.split(':')[0] || '00';
+                            setFormData({...formData, openTime: `${hours}:${e.target.value}`});
+                          }}
+                        >
+                          {Array.from({ length: 60 }).map((_, i) => (
+                            <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')} 分</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <span className="text-slate-400 font-bold mt-5">~</span>
+                    <div className="flex-1">
+                      <p className="text-[10px] text-slate-400 font-bold mb-1 ml-1">結束時間 (24小時制)</p>
+                      <div className="flex gap-1">
+                        <select 
+                          className="flex-1 bg-white border border-slate-200 rounded-xl px-2 py-2 outline-none focus:border-amber-500 text-sm font-bold"
+                          value={formData.closeTime.split(':')[0]}
+                          onChange={e => {
+                            const mins = formData.closeTime.split(':')[1] || '00';
+                            setFormData({...formData, closeTime: `${e.target.value}:${mins}`});
+                          }}
+                        >
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')} 點</option>
+                          ))}
+                        </select>
+                        <select 
+                          className="flex-1 bg-white border border-slate-200 rounded-xl px-2 py-2 outline-none focus:border-amber-500 text-sm font-bold"
+                          value={formData.closeTime.split(':')[1]}
+                          onChange={e => {
+                            const hours = formData.closeTime.split(':')[0] || '00';
+                            setFormData({...formData, closeTime: `${hours}:${e.target.value}`});
+                          }}
+                        >
+                          {Array.from({ length: 60 }).map((_, i) => (
+                            <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')} 分</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </>
               ) : (
