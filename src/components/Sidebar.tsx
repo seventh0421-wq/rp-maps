@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { X, Heart, Edit3, Globe, MapPin, Clock, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { X, Heart, Edit3, Globe, MapPin, Clock, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ChevronLeft, ChevronRight, Calendar, User } from 'lucide-react';
 import { Shop } from '../types';
 import { checkIsOpen } from '../utils';
 import { DAYS_OF_WEEK } from '../constants';
@@ -85,22 +85,33 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
               </button>
             </>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-<div className="absolute bottom-5 left-6 right-6 pointer-events-none">
-            <div className="flex gap-2 mb-2">
-              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${isCurrentlyOpen ? 'bg-emerald-500 text-white' : 'bg-slate-500/80 text-white'}`}>{isCurrentlyOpen ? '營業中' : '休息中'}</div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute bottom-4 left-6 right-6 pointer-events-none">
+            <div className="flex gap-2">
+              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${isCurrentlyOpen ? 'bg-emerald-500 text-white' : 'bg-slate-500/80 text-white'}`}>{isCurrentlyOpen ? '營業中' : '休息中'}</div>
               {shop.reservationType && shop.reservationType !== '不用預約' && (
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500 text-white shadow-sm">{shop.reservationType}</div>
-              )}
-              {shop.rpLevels && shop.rpLevels.length > 0 && (
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-500 text-white shadow-sm">RP: {shop.rpLevels.join('/')}</div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm">{shop.reservationType}</div>
               )}
             </div>
-            <h2 className="text-3xl font-extrabold text-white mb-2 tracking-wide">{shop.name}</h2>
-            <div className="flex gap-2 flex-wrap">{shop.tags?.map(tag => <span key={tag} className="px-2.5 py-1 text-xs font-bold bg-amber-500/90 text-white rounded-lg">{tag}</span>)}</div>
           </div>
         </div>
-        <div className="p-7 flex flex-col gap-6 bg-gradient-to-b from-white to-slate-50/50 overflow-y-auto custom-scrollbar">
+        <div className="px-7 pt-6 pb-2 shrink-0">
+          <h2 className="text-3xl font-black text-slate-900 mb-1 tracking-tight">{shop.name}</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm font-bold text-slate-500 flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full">
+              <User size={14} className="text-slate-400" />
+              店主：{shop.ownerName || '未知'}
+            </span>
+            <div className="flex gap-1.5 flex-wrap">
+              {shop.tags?.map(tag => (
+                <span key={tag} className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-md border border-amber-200/50">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="px-7 pb-7 flex flex-col gap-6 bg-gradient-to-b from-white to-slate-50/50 overflow-y-auto custom-scrollbar">
           <div className="flex flex-col gap-5 text-sm shrink-0">
             <div className="flex items-start gap-4"><div className="p-2.5 bg-sky-100 rounded-xl text-sky-600 shadow-sm border border-sky-200/50"><Globe size={20} /></div><div><p className="text-slate-500 text-xs font-bold mb-0.5">所在伺服器</p><p className="font-extrabold text-slate-800 text-base">{shop.server}</p></div></div>
             <div className="flex items-start gap-4"><div className="p-2.5 bg-emerald-100 rounded-xl text-emerald-600 shadow-sm border border-emerald-200/50"><MapPin size={20} /></div><div><p className="text-slate-500 text-xs font-bold mb-0.5">詳細地址</p><p className="font-extrabold text-slate-800 text-base">{shop.location} 第 {shop.ward} 區 {shop.isApartment ? `公寓 ${shop.plot}號房` : `${shop.plot}番地`}</p></div></div>

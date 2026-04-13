@@ -31,6 +31,7 @@ export interface Shop {
   };
   editPassword?: string;
   ownerId?: string;
+  updatedAt?: number;
 }
 
 export interface Marker {

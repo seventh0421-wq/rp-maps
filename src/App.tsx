@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Sparkles, Coffee, ChevronDown, Tag, HelpCircle, Shield, Heart, Calendar, User, FileText, MapPin, Map } from 'lucide-react';
+import { Plus, Search, Sparkles, Coffee, ChevronDown, Tag, HelpCircle, Shield, Heart, Calendar, User, FileText, MapPin, Map, X, Sun } from 'lucide-react';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
@@ -26,7 +26,7 @@ export default function App() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingShop, setEditingShop] = useState<Shop | null>(null); 
-  const [isHelpOpen, setIsHelpOpen] = useState(false); 
+  const [isHelpOpen, setIsHelpOpen] = useState(true); 
   const [isRPTutorialOpen, setIsRPTutorialOpen] = useState(false);
   const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false); 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -46,6 +46,8 @@ export default function App() {
   const [isListViewOpen, setIsListViewOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [registeredShop, setRegisteredShop] = useState<Shop | null>(null);
+  const [notifications, setNotifications] = useState<{id: string, shop: Shop}[]>([]);
+  const [lastNotified, setLastNotified] = useState<Record<string, string>>({}); // shopId -> date string
   const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
@@ -104,6 +106,62 @@ export default function App() {
     const interval = setInterval(updateStatus, 60000);
     return () => clearInterval(interval);
   }, [shops, activeArea, isSubdivision]);
+
+  useEffect(() => {
+    const checkNotifications = () => {
+      const now = new Date();
+      const todayStr = now.toDateString();
+      
+      const newlyOpened = shops.filter(shop => {
+        if (!bookmarks.includes(shop.id)) return false;
+        if (!checkIsOpen(shop)) return false;
+        
+        // Only notify once per day
+        const lastDate = lastNotified[shop.id];
+        return lastDate !== todayStr;
+      });
+
+      if (newlyOpened.length > 0) {
+        const newNotifs = newlyOpened.map(shop => ({ id: `${shop.id}-${Date.now()}`, shop }));
+        setNotifications(prev => [...prev, ...newNotifs]);
+        
+        setLastNotified(prev => {
+          const next = { ...prev };
+          newlyOpened.forEach(shop => {
+            next[shop.id] = todayStr;
+          });
+          return next;
+        });
+        
+        // Play sound
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.volume = 0.4;
+        audio.play().catch(() => {});
+      }
+    };
+
+    // Initial check after a short delay to let data load
+    const initialTimeout = setTimeout(checkNotifications, 3000);
+    const interval = setInterval(checkNotifications, 60000);
+    
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
+  }, [shops, bookmarks, lastNotified]);
+
+  useEffect(() => {
+    if (notifications.length > 0) {
+      const timer = setTimeout(() => {
+        setNotifications(prev => prev.slice(1));
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [notifications]);
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   const filteredShops = shops.filter(shop => {
     const matchArea = shop.location === activeArea;
@@ -179,27 +237,28 @@ export default function App() {
   };
   const handleShopSubmit = async (shopData: Shop, isEdit: boolean) => {
     if (!user) return;
+    const dataWithTimestamp = { ...shopData, updatedAt: Date.now() };
     const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'shops', shopData.id);
     try { 
-      await setDoc(docRef, shopData); 
+      await setDoc(docRef, dataWithTimestamp); 
       setEditingShop(null);
       
       if (isEdit) {
         if (!isAdminDashboardOpen) {
-          setSelectedShop(shopData);
+          setSelectedShop(dataWithTimestamp);
           setIsSidebarOpen(true);
         }
       } else {
         // New registration
-        setRegisteredShop(shopData);
+        setRegisteredShop(dataWithTimestamp);
         setIsSuccessModalOpen(true);
         
         if (!isAdminDashboardOpen) {
-          setActiveServer(shopData.server);
-          setActiveArea(shopData.location);
-          setIsSubdivision(shopData.isApartment ? shopData.isSubdivision : shopData.plot > 30);
+          setActiveServer(dataWithTimestamp.server);
+          setActiveArea(dataWithTimestamp.location);
+          setIsSubdivision(dataWithTimestamp.isApartment ? dataWithTimestamp.isSubdivision : dataWithTimestamp.plot > 30);
           setActiveTag('全部');
-          setSelectedShop(shopData);
+          setSelectedShop(dataWithTimestamp);
           setIsSidebarOpen(true);
           setHasInteracted(true);
         }
@@ -230,11 +289,40 @@ export default function App() {
       <RPTutorialModal isOpen={isRPTutorialOpen} onClose={() => setIsRPTutorialOpen(false)} />
       <RegistrationSuccessModal isOpen={isSuccessModalOpen} onClose={() => setIsSuccessModalOpen(false)} shopName={registeredShop?.name || ''} ownerName={registeredShop?.ownerName || ''} />
       <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
+      
+      {/* Notification System */}
+      <div className="fixed top-24 right-6 z-[6000] flex flex-col gap-3 pointer-events-none">
+        {notifications.map(notif => (
+          <div 
+            key={notif.id} 
+            className="pointer-events-auto bg-white/95 backdrop-blur-xl border-2 border-pink-100 rounded-3xl p-4 shadow-2xl flex items-center gap-4 animate-in slide-in-from-right-full duration-500 max-w-xs cursor-pointer hover:bg-pink-50 transition-all hover:-translate-x-1"
+            onClick={() => {
+              handleSelectSuggestion(notif.shop);
+              removeNotification(notif.id);
+            }}
+          >
+            <div className="bg-gradient-to-br from-pink-400 to-rose-500 p-3 rounded-2xl text-white shadow-lg shadow-pink-200">
+              <Heart size={20} fill="currentColor" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black text-pink-600 uppercase tracking-widest mb-0.5">愛店營業提醒</p>
+              <h4 className="font-extrabold text-slate-800 text-sm truncate">您的愛店「{notif.shop.name}」</h4>
+              <p className="text-[11px] font-bold text-slate-500">現在開始營業囉！</p>
+            </div>
+            <button 
+              onClick={(e) => { e.stopPropagation(); removeNotification(notif.id); }}
+              className="p-1 text-slate-300 hover:text-slate-500 transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ))}
+      </div>
       <PasswordPromptModal isOpen={isPwdPromptOpen} onClose={() => setIsPwdPromptOpen(false)} onSubmit={handlePasswordSubmit} errorMsg={pwdErrorMsg} />
       <RegistrationModal isOpen={isFormOpen} onClose={() => { setIsFormOpen(false); setEditingShop(null); }} onSubmit={handleShopSubmit} currentArea={activeArea} editingShop={editingShop} />
 
       <div className="absolute top-0 left-0 w-full z-[500] p-4 flex flex-col items-center gap-3 pointer-events-none">
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-lg p-3 flex items-center justify-between gap-4 pointer-events-auto max-w-[1000px] w-full overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-lg p-3 flex items-center justify-between gap-4 pointer-events-auto max-w-[1000px] w-full">
           <div className="flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-2.5 px-3 select-none bg-emerald-50 py-1.5 rounded-xl border border-emerald-100 shrink-0">
               <div className="bg-emerald-500 p-1.5 rounded-lg text-white shadow-sm">
@@ -261,8 +349,8 @@ export default function App() {
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input 
                 type="text" 
-                placeholder="搜尋店名、店主或標籤..." 
-                className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 transition-all shadow-sm" 
+                placeholder="搜尋店名、店主名稱或 ID..." 
+                className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500 transition-all shadow-sm" 
                 value={searchQuery} 
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -405,16 +493,50 @@ export default function App() {
         </div>
       )}
 
-      {/* Random Recommend Button on Right Bottom */}
-      <div className="absolute right-6 bottom-24 z-[400] flex flex-col gap-4 pointer-events-none">
+      {/* Recently Updated & Random Recommend Buttons on Right Bottom */}
+      <div className="absolute right-6 bottom-24 z-[400] flex flex-col items-end gap-4 pointer-events-none">
+        {/* Recently Updated List */}
+        {shops.filter(s => s.updatedAt && (Date.now() - s.updatedAt < 24 * 60 * 60 * 1000)).length > 0 && (
+          <div className="pointer-events-auto w-64 bg-white/90 backdrop-blur-xl rounded-[2rem] border border-emerald-100 shadow-xl overflow-hidden animate-in slide-in-from-right-4 duration-500">
+            <div className="bg-emerald-500 px-5 py-3 flex items-center gap-2">
+              <Sun size={18} className="text-white animate-spin-slow" />
+              <span className="text-sm font-black text-white uppercase tracking-widest">24H 最近更新</span>
+            </div>
+            <div className="max-h-48 overflow-y-auto custom-scrollbar p-2">
+              {shops
+                .filter(s => s.updatedAt && (Date.now() - s.updatedAt < 24 * 60 * 60 * 1000))
+                .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+                .map(shop => (
+                  <div 
+                    key={shop.id} 
+                    onClick={() => handleSelectSuggestion(shop)}
+                    className="p-3 hover:bg-emerald-50 rounded-2xl cursor-pointer transition-colors border-b border-slate-50 last:border-0 group"
+                  >
+                    <div className="flex justify-between items-start gap-2">
+                      <h5 className="text-sm font-black text-slate-800 truncate group-hover:text-emerald-600 transition-colors">{shop.name}</h5>
+                      <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-md shrink-0">NEW</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1"><MapPin size={10} /> {shop.location}</span>
+                      <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1"><User size={10} /> {shop.ownerName || '店主'}</span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
         <button 
           onClick={handleRandomRecommend}
-          className="pointer-events-auto group bg-white/90 backdrop-blur-xl p-4 rounded-[2rem] border border-indigo-100 shadow-xl hover:shadow-indigo-200/50 hover:-translate-y-1 transition-all flex flex-col items-center gap-2 w-20 sm:w-24"
+          className="pointer-events-auto group bg-white/90 backdrop-blur-xl p-4 rounded-full border border-indigo-100 shadow-xl hover:shadow-indigo-200/50 hover:-translate-y-1 transition-all flex items-center gap-4 w-64"
         >
-          <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 group-hover:rotate-12 transition-transform">
-            <Sparkles size={24} />
+          <div className="w-11 h-11 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 group-hover:rotate-12 transition-transform shrink-0">
+            <Sparkles size={22} />
           </div>
-          <span className="text-[10px] sm:text-xs font-black text-indigo-600 text-center leading-tight">隨機<br/>推薦</span>
+          <div className="flex flex-col items-start">
+            <span className="text-sm font-black text-indigo-600 leading-tight">不知道去哪？</span>
+            <span className="text-xs font-bold text-indigo-400">點我隨機推薦一間店！</span>
+          </div>
         </button>
       </div>
     </div>
