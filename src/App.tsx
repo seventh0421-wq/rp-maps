@@ -365,7 +365,7 @@ export default function App() {
                 <div className="absolute top-full left-0 w-full mt-2 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-2xl overflow-hidden z-[2000] py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                   {searchSuggestions.length > 0 ? (searchSuggestions.map(shop => (
                     <div key={shop.id} onMouseDown={(e) => { e.preventDefault(); handleSelectSuggestion(shop); }} className="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-100 last:border-0 flex flex-col gap-1">
-                      <div className="flex justify-between items-center"><span className="font-bold text-slate-800">{shop.name}</span><span className="text-[10px] font-bold text-white bg-emerald-500 px-2 py-0.5 rounded-md">{shop.server}</span></div>
+                      <div className="flex justify-between items-center"><span className="font-bold text-slate-800">{shop.name}</span><span className="text-xs font-bold text-white bg-emerald-500 px-2 py-0.5 rounded-md">{shop.server}</span></div>
                       <div className="text-xs text-slate-500 flex justify-between"><span className="flex items-center gap-1"><Coffee size={12}/> {shop.ownerName || shop.ownerId || '未知店主'}</span><span className="flex items-center gap-1"><MapPin size={12}/> {shop.location}</span></div>
                     </div>
                   ))) : (<div className="px-4 py-6 text-center text-sm text-slate-500 font-bold flex flex-col items-center gap-2"><Search size={24} className="text-slate-300" />找不到符合的店鋪</div>)}
@@ -514,11 +514,11 @@ export default function App() {
                   >
                     <div className="flex justify-between items-start gap-2">
                       <h5 className="text-sm font-black text-slate-800 truncate group-hover:text-emerald-600 transition-colors">{shop.name}</h5>
-                      <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-md shrink-0">NEW</span>
+                      <span className="text-xs font-bold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-md shrink-0">NEW</span>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1"><MapPin size={10} /> {shop.location}</span>
-                      <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1"><User size={10} /> {shop.ownerName || '店主'}</span>
+                      <span className="text-xs text-slate-400 font-bold flex items-center gap-1"><MapPin size={10} /> {shop.location}</span>
+                      <span className="text-xs text-slate-400 font-bold flex items-center gap-1"><User size={10} /> {shop.ownerName || '店主'}</span>
                     </div>
                   </div>
                 ))}

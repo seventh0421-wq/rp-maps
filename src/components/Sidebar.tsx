@@ -88,9 +88,12 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
           <div className="absolute bottom-4 left-6 right-6 pointer-events-none">
             <div className="flex gap-2">
-              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${isCurrentlyOpen ? 'bg-emerald-500 text-white' : 'bg-slate-500/80 text-white'}`}>{isCurrentlyOpen ? '營業中' : '休息中'}</div>
+              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${isCurrentlyOpen ? 'bg-emerald-500 text-white' : 'bg-slate-500/80 text-white'}`}>{isCurrentlyOpen ? '營業中' : '休息中'}</div>
               {shop.reservationType && shop.reservationType !== '不用預約' && (
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm">{shop.reservationType}</div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500 text-white shadow-sm">{shop.reservationType}</div>
+              )}
+              {shop.rpLevels && shop.rpLevels.length > 0 && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-500 text-white shadow-sm">RP: {shop.rpLevels.join('/')}</div>
               )}
             </div>
           </div>
@@ -104,7 +107,7 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
             </span>
             <div className="flex gap-1.5 flex-wrap">
               {shop.tags?.map(tag => (
-                <span key={tag} className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-md border border-amber-200/50">
+                <span key={tag} className="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-700 rounded-md border border-amber-200/50">
                   {tag}
                 </span>
               ))}
