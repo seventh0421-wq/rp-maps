@@ -4,15 +4,17 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Sparkles, Coffee, ChevronDown, Tag, HelpCircle, Shield, Heart, Calendar, User, FileText, MapPin, Map, X, Sun } from 'lucide-react';
+import { Plus, Search, Sparkles, Coffee, ChevronDown, Tag, HelpCircle, Shield, Heart, Calendar, User, FileText, MapPin, Map, X, Sun, Menu } from 'lucide-react';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { motion, AnimatePresence } from 'motion/react';
 
 import { auth, db, APP_ID } from './firebase';
 import { Shop, Marker } from './types';
 import { HOUSING_AREAS, SERVER_LIST, TAG_LIST, AREA_MAPS, RP_LEVEL_LIST } from './constants';
-import { checkIsOpen, getPlotCoordinates } from './utils';
+import { checkIsOpen, getPlotCoordinates, getWeekNumber, shuffleWithSeed } from './utils';
 import { AdminLoginModal, AdminDashboard, HelpModal, DisclaimerModal, PasswordPromptModal, RegistrationModal, RPTutorialModal, RegistrationSuccessModal } from './components/Modals';
+import { WeeklyItineraryModal } from './components/WeeklyItineraryModal';
 import { InteractiveMap } from './components/Map';
 import { ShopSidebar } from './components/Sidebar';
 import { ShopList } from './components/ShopList';
@@ -45,10 +47,47 @@ export default function App() {
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [isListViewOpen, setIsListViewOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isItineraryOpen, setIsItineraryOpen] = useState(false);
   const [registeredShop, setRegisteredShop] = useState<Shop | null>(null);
   const [notifications, setNotifications] = useState<{id: string, shop: Shop}[]>([]);
   const [lastNotified, setLastNotified] = useState<Record<string, string>>({}); // shopId -> date string
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const weeklyItinerary = React.useMemo(() => {
+    if (shops.length === 0) return {};
+    
+    const now = new Date();
+    const weekNum = getWeekNumber(now);
+    const year = now.getFullYear();
+    // Seed based on year and week to ensure it changes every Monday
+    const seed = year * 100 + weekNum;
+    
+    // Deterministically shuffle shops for the week
+    const shuffledShops = shuffleWithSeed<Shop>(shops, seed);
+    const itinerary: Record<number, Shop[]> = {};
+    
+    // For each day of the week (0-6)
+    [1, 2, 3, 4, 5, 6, 0].forEach((day, index) => {
+      // Find shops open on this day
+      const availableShops = shuffledShops.filter((s: Shop) => s.openDays?.includes(day));
+      
+      // Pick up to 3 shops per day to keep it manageable but diverse
+      // Use a sliding window based on the day index to ensure different shops each day
+      const startIdx = (index * 2) % Math.max(1, availableShops.length);
+      const dayShops = availableShops.slice(startIdx, startIdx + 2);
+      
+      // If we didn't get enough shops, wrap around
+      if (dayShops.length < 2 && availableShops.length > dayShops.length) {
+        const remaining = 2 - dayShops.length;
+        dayShops.push(...availableShops.slice(0, remaining));
+      }
+      
+      itinerary[day] = dayShops;
+    });
+    
+    return itinerary;
+  }, [shops]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -288,6 +327,18 @@ export default function App() {
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} onOpenTutorial={() => { setIsHelpOpen(false); setIsRPTutorialOpen(true); }} />
       <RPTutorialModal isOpen={isRPTutorialOpen} onClose={() => setIsRPTutorialOpen(false)} />
       <RegistrationSuccessModal isOpen={isSuccessModalOpen} onClose={() => setIsSuccessModalOpen(false)} shopName={registeredShop?.name || ''} ownerName={registeredShop?.ownerName || ''} />
+      <WeeklyItineraryModal 
+        isOpen={isItineraryOpen} 
+        onClose={() => setIsItineraryOpen(false)} 
+        itinerary={weeklyItinerary}
+        onSelectShop={(shop) => {
+          setActiveServer(shop.server);
+          setActiveArea(shop.location);
+          setIsSubdivision(shop.isApartment ? shop.isSubdivision || false : shop.plot > 30);
+          setSelectedShop(shop);
+          setIsSidebarOpen(true);
+        }}
+      />
       <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
       
       {/* Notification System */}
@@ -321,7 +372,215 @@ export default function App() {
       <PasswordPromptModal isOpen={isPwdPromptOpen} onClose={() => setIsPwdPromptOpen(false)} onSubmit={handlePasswordSubmit} errorMsg={pwdErrorMsg} />
       <RegistrationModal isOpen={isFormOpen} onClose={() => { setIsFormOpen(false); setEditingShop(null); }} onSubmit={handleShopSubmit} currentArea={activeArea} editingShop={editingShop} />
 
-      <div className="absolute top-0 left-0 w-full z-[500] p-4 flex flex-col items-center gap-3 pointer-events-none">
+      {/* Mobile Hamburger Menu Button */}
+      <div className="fixed top-6 left-6 z-[1100] sm:hidden">
+        <button 
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="p-3 bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200 shadow-lg text-slate-700 hover:text-emerald-600 transition-all"
+        >
+          <Menu size={24} />
+        </button>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-[2000] sm:hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              className="absolute top-0 left-0 h-full w-[80%] max-w-sm bg-white shadow-2xl flex flex-col p-6 overflow-y-auto"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-2.5">
+                  <div className="bg-emerald-500 p-1.5 rounded-lg text-white shadow-sm">
+                    <Map size={20} />
+                  </div>
+                  <span className="font-extrabold text-emerald-900 text-lg">光之街角</span>
+                </div>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-slate-600">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">搜尋店鋪</label>
+                  <div className="relative">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input 
+                      type="text" 
+                      placeholder="搜尋店名、店主名稱..." 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500 transition-all" 
+                      value={searchQuery} 
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        if (e.target.value.trim() !== '') {
+                          setIsListViewOpen(true);
+                          setIsMobileMenuOpen(false);
+                        }
+                      }} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">選擇住宅區</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {HOUSING_AREAS.map(area => (
+                      <button
+                        key={area}
+                        onClick={() => {
+                          setActiveArea(area);
+                          setIsSubdivision(false);
+                          setIsSidebarOpen(false);
+                          setHasInteracted(true);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full p-3 rounded-xl text-left font-bold text-sm transition-all border ${
+                          activeArea === area 
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                            : 'bg-slate-50 border-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {area}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">分區選擇</label>
+                  <div className="flex p-1 bg-slate-100 rounded-xl">
+                    <button 
+                      onClick={() => { setIsSubdivision(false); setIsMobileMenuOpen(false); }}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      一般
+                    </button>
+                    <button 
+                      onClick={() => { setIsSubdivision(true); setIsMobileMenuOpen(false); }}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      擴建
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">伺服器</label>
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none"
+                    value={activeServer}
+                    onChange={(e) => { setActiveServer(e.target.value); setIsMobileMenuOpen(false); }}
+                  >
+                    {SERVER_LIST.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                <div className="h-px bg-slate-100 my-4"></div>
+
+                <div className="space-y-4">
+                  <button 
+                    onClick={() => { setIsItineraryOpen(true); setIsMobileMenuOpen(false); }}
+                    className="w-full flex items-center gap-4 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-left group"
+                  >
+                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 shrink-0">
+                      <Calendar size={20} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-black text-indigo-700 leading-tight">本週推薦行程</span>
+                      <span className="text-[10px] font-bold text-indigo-400">一週探店指南</span>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => { handleRandomRecommend(); setIsMobileMenuOpen(false); }}
+                    className="w-full flex items-center gap-4 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-left group"
+                  >
+                    <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 shrink-0">
+                      <Sparkles size={20} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-black text-indigo-600 leading-tight">不知道去哪？</span>
+                      <span className="text-[10px] font-bold text-indigo-400">點我隨機推薦</span>
+                    </div>
+                  </button>
+                </div>
+
+                {shops.filter(s => s.updatedAt && (Date.now() - s.updatedAt < 24 * 60 * 60 * 1000)).length > 0 && (
+                  <div className="space-y-3">
+                    <label className="text-xs font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                      <Sun size={14} className="animate-spin-slow" /> 24H 最近更新
+                    </label>
+                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl overflow-hidden">
+                      <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
+                        {shops
+                          .filter(s => s.updatedAt && (Date.now() - s.updatedAt < 24 * 60 * 60 * 1000))
+                          .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+                          .map(shop => (
+                            <div 
+                              key={shop.id} 
+                              onClick={() => { handleSelectSuggestion(shop); setIsMobileMenuOpen(false); }}
+                              className="p-3 hover:bg-white rounded-xl cursor-pointer transition-colors border-b border-emerald-50/50 last:border-0 group"
+                            >
+                              <div className="flex justify-between items-start gap-2">
+                                <h5 className="text-sm font-black text-slate-800 truncate group-hover:text-emerald-600 transition-colors">{shop.name}</h5>
+                                <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-md shrink-0">NEW</span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1"><MapPin size={10} /> {shop.location}</span>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-auto pt-6 space-y-4">
+                <div className="flex flex-col gap-2 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <span>系統資訊</span>
+                    <span className="text-emerald-500">2026/04/14 更新</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center text-sky-600">
+                        <User size={16} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-black text-slate-700">閻羅@奧汀</span>
+                        <span className="text-[10px] font-bold text-slate-400">地圖作者</span>
+                      </div>
+                    </div>
+                    <button onClick={() => { isAdmin ? setIsAdminDashboardOpen(true) : setIsAdminLoginOpen(true); setIsMobileMenuOpen(false); }} className={`p-2 rounded-lg transition-colors ${isAdmin ? 'text-emerald-600 bg-emerald-50' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'}`} title="後臺管理"><Shield size={16} /></button>
+                  </div>
+                  <button onClick={() => { setIsDisclaimerOpen(true); setIsMobileMenuOpen(false); }} className="w-full mt-2 py-2 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg border border-rose-100/50 flex items-center justify-center gap-1.5 uppercase tracking-widest"><FileText size={12} /> 免責聲明</button>
+                </div>
+
+                <button 
+                  onClick={() => { setIsHelpOpen(true); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 p-3 text-slate-500 font-bold hover:text-emerald-600 transition-colors"
+                >
+                  <HelpCircle size={20} /> 使用說明
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <div className="absolute top-0 left-0 w-full z-[500] p-4 hidden sm:flex flex-col items-center gap-3 pointer-events-none">
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-lg p-3 flex items-center justify-between gap-4 pointer-events-auto max-w-[1000px] w-full">
           <div className="flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-2.5 px-3 select-none bg-emerald-50 py-1.5 rounded-xl border border-emerald-100 shrink-0">
@@ -413,9 +672,9 @@ export default function App() {
         </div>
       )}
 
-      <div className="absolute bottom-6 right-6 z-[400] animate-in fade-in duration-700">
+      <div className="absolute bottom-6 right-6 z-[400] animate-in fade-in duration-700 hidden sm:block">
         <div className="bg-white/80 backdrop-blur-xl px-5 py-2.5 rounded-full border border-slate-200/60 shadow-lg text-[10px] sm:text-xs font-bold text-slate-500 flex items-center gap-3 sm:gap-5">
-          <span className="flex items-center gap-1.5 whitespace-nowrap"><Calendar size={14} className="text-emerald-500" /> 更新日期：2026/04/12</span>
+          <span className="flex items-center gap-1.5 whitespace-nowrap"><Calendar size={14} className="text-emerald-500" /> 更新日期：2026/04/14</span>
           <div className="w-px h-3 bg-slate-300 hidden sm:block"></div>
           <div className="flex items-center gap-3 sm:gap-5">
             <button onClick={() => setIsDisclaimerOpen(true)} className="flex items-center gap-1 text-rose-500 hover:text-rose-700 font-extrabold py-0.5 px-2 bg-rose-50 rounded-lg border border-rose-100/50 transition-colors"><FileText size={14} /> 免責聲明</button>
@@ -494,7 +753,7 @@ export default function App() {
       )}
 
       {/* Recently Updated & Random Recommend Buttons on Right Bottom */}
-      <div className="absolute right-6 bottom-24 z-[400] flex flex-col items-end gap-4 pointer-events-none">
+      <div className={`absolute right-6 z-[400] hidden sm:flex flex-col items-end gap-4 pointer-events-none transition-all duration-500 ${isSidebarOpen ? 'bottom-[88vh] sm:bottom-24' : 'bottom-24'}`}>
         {/* Recently Updated List */}
         {shops.filter(s => s.updatedAt && (Date.now() - s.updatedAt < 24 * 60 * 60 * 1000)).length > 0 && (
           <div className="pointer-events-auto w-64 bg-white/90 backdrop-blur-xl rounded-[2rem] border border-emerald-100 shadow-xl overflow-hidden animate-in slide-in-from-right-4 duration-500">
@@ -525,6 +784,19 @@ export default function App() {
             </div>
           </div>
         )}
+
+        <button 
+          onClick={() => setIsItineraryOpen(true)}
+          className="pointer-events-auto group bg-white/90 backdrop-blur-xl p-4 rounded-full border border-indigo-100 shadow-xl hover:shadow-indigo-200/50 hover:-translate-y-1 transition-all flex items-center gap-4 w-64"
+        >
+          <div className="w-11 h-11 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 group-hover:rotate-12 transition-transform shrink-0">
+            <Calendar size={22} />
+          </div>
+          <div className="flex flex-col items-start">
+            <span className="text-sm font-black text-indigo-700 leading-tight">本週推薦行程</span>
+            <span className="text-xs font-bold text-indigo-400">幫您排好一週探店指南！</span>
+          </div>
+        </button>
 
         <button 
           onClick={handleRandomRecommend}

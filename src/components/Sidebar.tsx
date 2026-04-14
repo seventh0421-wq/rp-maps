@@ -40,8 +40,14 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
   };
 
   return (
-    <div className={`absolute z-[1000] transform transition-all duration-300 ease-in-out pointer-events-none flex flex-col top-0 left-0 h-full w-full sm:top-[96px] sm:h-auto sm:max-h-[calc(100vh-120px)] sm:w-[400px] ${isShifted ? 'sm:left-[370px]' : 'sm:left-6'} ${isOpen ? 'translate-x-0' : '-translate-x-full sm:-translate-x-[calc(100%+400px)]'}`}>
-      <div className="w-full h-full sm:h-auto sm:max-h-[calc(100vh-120px)] bg-white/95 backdrop-blur-2xl sm:rounded-[2rem] sm:border border-slate-200 shadow-2xl flex flex-col text-slate-800 overflow-hidden pointer-events-auto relative">
+    <div className={`fixed z-[1000] transform transition-all duration-500 ease-in-out pointer-events-none flex flex-col 
+      bottom-0 left-0 w-full h-[85vh] sm:h-auto sm:max-h-[calc(100vh-120px)] sm:w-[400px] sm:top-[96px] sm:bottom-auto
+      ${isShifted ? 'sm:left-[370px]' : 'sm:left-6'} 
+      ${isOpen ? 'translate-y-0 sm:translate-x-0' : 'translate-y-full sm:-translate-x-[calc(100%+400px)]'}`}>
+      <div className="w-full h-full bg-white/95 backdrop-blur-2xl rounded-t-[2.5rem] sm:rounded-[2rem] border-t sm:border border-slate-200 shadow-2xl flex flex-col text-slate-800 overflow-hidden pointer-events-auto relative">
+        {/* Mobile Handle */}
+        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-4 mb-2 sm:hidden shrink-0" />
+        
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
           <button onClick={() => onToggleBookmark(shop.id)} className={`p-2 backdrop-blur-md rounded-full shadow-lg transition-all ${isBookmarked ? 'bg-pink-500 text-white' : 'bg-white/90 text-pink-500'}`} title={isBookmarked ? "取消收藏" : "加入收藏"}><Heart size={18} fill={isBookmarked ? "currentColor" : "none"} /></button>
           <button onClick={() => onEditClick(shop)} className="p-2 bg-amber-500 rounded-full text-white shadow-lg" title="編輯店面資訊"><Edit3 size={18} /></button>

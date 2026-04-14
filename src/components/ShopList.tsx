@@ -12,7 +12,7 @@ interface ShopListProps {
 
 export const ShopList = ({ shops, onShopClick, onClose, activeTag }: ShopListProps) => {
   return (
-    <div className="absolute left-0 top-[140px] bottom-0 w-full sm:w-[350px] z-[900] bg-white/95 backdrop-blur-xl border-r border-slate-200 shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+    <div className="absolute left-0 top-0 sm:top-[140px] bottom-0 w-full sm:w-[350px] z-[900] bg-white/95 backdrop-blur-xl border-r border-slate-200 shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
       <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-emerald-50/50">
         <div>
           <h3 className="font-black text-emerald-900 flex items-center gap-2">
