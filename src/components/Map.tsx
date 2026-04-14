@@ -4,16 +4,72 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Maximize2, Crosshair } from 'lucide-react';
 import { Marker, Shop } from '../types';
 import { checkIsOpen } from '../utils';
 
-export const InteractiveMap = ({ imageUrl, bounds, markers, onMarkerClick }: { imageUrl: string | null, bounds: { width: number, height: number }, markers: Marker[], onMarkerClick: (shop: Shop) => void }) => {
+export const InteractiveMap = ({ imageUrl, bounds, markers, onMarkerClick, selectedShop }: { imageUrl: string | null, bounds: { width: number, height: number }, markers: Marker[], onMarkerClick: (shop: Shop) => void, selectedShop: Shop | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(true);
+
+  const zoomToFit = () => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+
+    if (markers.length === 0) {
+      const initialScale = Math.min(rect.width / bounds.width, rect.height / bounds.height) * 0.9;
+      setTransform({ 
+        x: (rect.width - bounds.width * initialScale) / 2, 
+        y: (rect.height - bounds.height * initialScale) / 2, 
+        scale: initialScale 
+      });
+      return;
+    }
+
+    const padding = 100;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    markers.forEach(m => {
+      minX = Math.min(minX, m.x);
+      maxX = Math.max(maxX, m.x);
+      minY = Math.min(minY, m.y);
+      maxY = Math.max(maxY, m.y);
+    });
+
+    const contentWidth = maxX - minX + padding * 2;
+    const contentHeight = maxY - minY + padding * 2;
+    
+    const scale = Math.min(rect.width / contentWidth, rect.height / contentHeight, 1.5);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    setTransform({
+      x: rect.width / 2 - centerX * scale,
+      y: rect.height / 2 - centerY * scale,
+      scale
+    });
+  };
+
+  const centerOnShop = (shop: Shop) => {
+    const marker = markers.find(m => m.data.id === shop.id);
+    if (marker && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const scale = Math.max(transform.scale, 1.2);
+      setTransform({
+        x: rect.width / 2 - marker.x * scale,
+        y: rect.height / 2 - marker.y * scale,
+        scale
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (selectedShop && !isLoading) {
+      centerOnShop(selectedShop);
+    }
+  }, [selectedShop, isLoading]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -76,10 +132,11 @@ export const InteractiveMap = ({ imageUrl, bounds, markers, onMarkerClick }: { i
         )}
         {!isLoading && markers.map(marker => {
           const isOpen = checkIsOpen(marker.data);
+          const isSelected = selectedShop?.id === marker.data.id;
           return (
             <div 
               key={marker.id} 
-              className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-125 transition-transform origin-bottom z-10" 
+              className={`absolute cursor-pointer transform -translate-x-1/2 -translate-y-full transition-all origin-bottom z-10 ${isSelected ? 'scale-150 z-20' : 'hover:scale-125'}`} 
               style={{ left: marker.x, top: marker.y }} 
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => { 
@@ -87,14 +144,48 @@ export const InteractiveMap = ({ imageUrl, bounds, markers, onMarkerClick }: { i
                 onMarkerClick(marker.data); 
               }}
             >
-              <div style={{ filter: 'drop-shadow(0px 6px 6px rgba(0,0,0,0.4))' }} className="relative">
+              <div style={{ filter: isSelected ? 'drop-shadow(0px 8px 12px rgba(249,115,22,0.4))' : 'drop-shadow(0px 6px 6px rgba(0,0,0,0.4))' }} className="relative">
                 {marker.isBookmarked && (<div className="absolute -top-1 -left-2 z-30 bg-pink-500 rounded-full p-1 border-2 border-white shadow-md"><div className="w-2.5 h-2.5 bg-white rounded-full flex items-center justify-center"><div className="w-1.5 h-1.5 bg-pink-500 rounded-full"></div></div></div>)}
                 {isOpen && (<span className="absolute -top-1 -right-1 flex h-4 w-4 z-20"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white"></span></span>)}
-                <svg width="44" height="44" viewBox="0 0 24 24" fill={isOpen ? "#f97316" : "#94a3b8"} stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3.5" fill="white"></circle></svg>
+                <svg width="44" height="44" viewBox="0 0 24 24" fill={isSelected ? "#f97316" : (isOpen ? "#fb923c" : "#94a3b8")} stroke={isSelected ? "white" : "white"} strokeWidth={isSelected ? "3" : "2"} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                  <circle cx="12" cy="10" r="3.5" fill="white"></circle>
+                </svg>
               </div>
             </div>
           );
         })}
+      </div>
+
+      {/* Map Controls */}
+      <div 
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 pointer-events-auto"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            zoomToFit();
+          }}
+          className="bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-xl text-slate-700 hover:text-emerald-600 hover:scale-110 transition-all group"
+          title="縮放至全覽"
+        >
+          <Maximize2 size={20} />
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">縮放至全覽</span>
+        </button>
+        {selectedShop && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              centerOnShop(selectedShop);
+            }}
+            className="bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-emerald-200 shadow-xl text-emerald-600 hover:scale-110 transition-all group"
+            title="定位當前店鋪"
+          >
+            <Crosshair size={20} />
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">定位當前店鋪</span>
+          </button>
+        )}
       </div>
     </div>
   );

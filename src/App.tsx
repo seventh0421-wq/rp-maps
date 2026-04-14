@@ -28,7 +28,11 @@ export default function App() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingShop, setEditingShop] = useState<Shop | null>(null); 
-  const [isHelpOpen, setIsHelpOpen] = useState(true); 
+  const [isHelpOpen, setIsHelpOpen] = useState(() => {
+    // Check if user has seen help before
+    const hasSeenHelp = localStorage.getItem('hasSeenHelp_v1');
+    return hasSeenHelp !== 'true';
+  }); 
   const [isRPTutorialOpen, setIsRPTutorialOpen] = useState(false);
   const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false); 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -311,6 +315,11 @@ export default function App() {
   const handleEditClick = (shop: Shop) => { if (isAdmin) { setEditingShop(shop); setIsFormOpen(true); } else { setPwdErrorMsg(''); setShopToEdit(shop); setIsPwdPromptOpen(true); } };
   const handlePasswordSubmit = (pwd: string) => { if (shopToEdit && pwd === shopToEdit.editPassword) { setIsPwdPromptOpen(false); setEditingShop(shopToEdit); setIsFormOpen(true); } else { setPwdErrorMsg('密碼錯誤，請重新輸入！'); } };
 
+  const handleCloseHelp = () => {
+    setIsHelpOpen(false);
+    localStorage.setItem('hasSeenHelp_v1', 'true');
+  };
+
   return (
     <div className="w-full h-screen relative bg-[#f8f6f0] overflow-hidden font-sans text-slate-800">
       {/* Global Background Image */}
@@ -324,7 +333,7 @@ export default function App() {
       </div>
       <AdminLoginModal isOpen={isAdminLoginOpen} onClose={() => setIsAdminLoginOpen(false)} onLogin={() => { setIsAdmin(true); setIsAdminLoginOpen(false); setIsAdminDashboardOpen(true); }} />
       <AdminDashboard isOpen={isAdminDashboardOpen} onClose={() => setIsAdminDashboardOpen(false)} shops={shops} onEditShop={(shop) => { setEditingShop(shop); setIsFormOpen(true); }} onDeleteShop={handleDeleteShop} />
-      <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} onOpenTutorial={() => { setIsHelpOpen(false); setIsRPTutorialOpen(true); }} />
+      <HelpModal isOpen={isHelpOpen} onClose={handleCloseHelp} onOpenTutorial={() => { handleCloseHelp(); setIsRPTutorialOpen(true); }} />
       <RPTutorialModal isOpen={isRPTutorialOpen} onClose={() => setIsRPTutorialOpen(false)} />
       <RegistrationSuccessModal isOpen={isSuccessModalOpen} onClose={() => setIsSuccessModalOpen(false)} shopName={registeredShop?.name || ''} ownerName={registeredShop?.ownerName || ''} />
       <WeeklyItineraryModal 
@@ -714,6 +723,7 @@ export default function App() {
           bounds={{ width: 1000, height: 1000 }} 
           markers={mapMarkers} 
           onMarkerClick={handleMarkerClick} 
+          selectedShop={selectedShop}
         />
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50/40 to-emerald-50/20 p-6 relative z-10">
