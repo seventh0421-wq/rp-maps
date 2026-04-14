@@ -142,9 +142,19 @@ export default function App() {
   useEffect(() => {
     const updateStatus = () => {
       const openNowShops = shops.filter(shop => {
-        const shopIsSub = shop.isApartment ? shop.isSubdivision : shop.plot > 30;
-        return checkIsOpen(shop) && shop.location === activeArea && (isSubdivision ? shopIsSub : !shopIsSub);
+        const isOpen = checkIsOpen(shop);
+        if (!isOpen) return false;
+        
+        // If an area is selected, prioritize shops in that area
+        if (activeArea !== '選擇住宅區') {
+          const shopIsSub = shop.isApartment ? shop.isSubdivision : shop.plot > 30;
+          return shop.location === activeArea && (isSubdivision ? shopIsSub : !shopIsSub);
+        }
+        
+        // If no area selected, any open shop is fine
+        return true;
       });
+
       if (openNowShops.length > 0) {
         setRecommendation(prev => {
           if (prev && openNowShops.find(s => s.id === prev.id)) return prev;
@@ -282,6 +292,9 @@ export default function App() {
   };
   const handleMarkerClick = (shopData: Shop) => { 
     setHasInteracted(true);
+    setActiveServer(shopData.server);
+    setActiveArea(shopData.location);
+    setIsSubdivision(shopData.isApartment ? shopData.isSubdivision : shopData.plot > 30);
     setSelectedShop(shopData); 
     setIsSidebarOpen(true); 
   };
