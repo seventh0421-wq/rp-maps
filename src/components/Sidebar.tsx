@@ -105,12 +105,14 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
           </div>
         </div>
         <div className="px-7 pt-6 pb-2 shrink-0">
-          <h2 className="text-3xl font-black text-slate-900 mb-1 tracking-tight">{shop.name}</h2>
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-sm font-bold text-slate-500 flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full">
-              <User size={14} className="text-slate-400" />
-              店主：{shop.ownerName || '未知'}
-            </span>
+          <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">{shop.name}</h2>
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex items-center">
+              <span className="text-sm font-bold text-slate-500 flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full">
+                <User size={14} className="text-slate-400" />
+                店主：{shop.ownerName || '未知'}
+              </span>
+            </div>
             <div className="flex gap-1.5 flex-wrap">
               {shop.tags?.map(tag => (
                 <span key={tag} className="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-700 rounded-md border border-amber-200/50">
