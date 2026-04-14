@@ -139,10 +139,13 @@ export const WeeklyItineraryModal = ({ isOpen, onClose, itinerary, onSelectShop 
           </div>
 
           {/* Footer */}
-          <div className="p-6 bg-white border-t border-slate-100 flex justify-center shrink-0">
+          <div className="p-6 bg-white border-t border-slate-100 flex flex-col items-center gap-2 shrink-0">
             <p className="text-xs font-bold text-slate-400 flex items-center gap-2 italic">
               <Sparkles size={14} />
               每週一自動更新，讓每間優質店面都有機會與您相遇
+            </p>
+            <p className="text-[10px] font-black text-rose-400 bg-rose-50 px-4 py-1.5 rounded-full border border-rose-100/50">
+              ⚠️ 提醒：若店家本週營業時間有臨時變動，請以店主之最新公告為準
             </p>
           </div>
         </motion.div>

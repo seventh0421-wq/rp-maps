@@ -87,6 +87,13 @@ export default function App() {
         dayShops.push(...availableShops.slice(0, remaining));
       }
       
+      // Sort by open time
+      dayShops.sort((a, b) => {
+        const timeA = a.openTime || '00:00';
+        const timeB = b.openTime || '00:00';
+        return timeA.localeCompare(timeB);
+      });
+      
       itinerary[day] = dayShops;
     });
     
