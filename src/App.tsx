@@ -167,40 +167,38 @@ export default function App() {
     return () => clearInterval(interval);
   }, [shops, activeArea, isSubdivision]);
 
+  const prevOpenStatus = React.useRef<Record<string, boolean>>({});
+
   useEffect(() => {
     const checkNotifications = () => {
-      const now = new Date();
-      const todayStr = now.toDateString();
+      const currentStatus: Record<string, boolean> = {};
+      const newlyOpened: Shop[] = [];
       
-      const newlyOpened = shops.filter(shop => {
-        if (!bookmarks.includes(shop.id)) return false;
-        if (!checkIsOpen(shop)) return false;
+      shops.forEach(shop => {
+        const isOpen = checkIsOpen(shop);
+        currentStatus[shop.id] = isOpen;
         
-        // Only notify once per day
-        const lastDate = lastNotified[shop.id];
-        return lastDate !== todayStr;
+        // 只有當狀態從「休息」變為「營業」，且該店在收藏清單中時，才觸發通知
+        if (isOpen && !prevOpenStatus.current[shop.id] && bookmarks.includes(shop.id)) {
+          newlyOpened.push(shop);
+        }
       });
+
+      // 更新追蹤狀態
+      prevOpenStatus.current = currentStatus;
 
       if (newlyOpened.length > 0) {
         const newNotifs = newlyOpened.map(shop => ({ id: `${shop.id}-${Date.now()}`, shop }));
         setNotifications(prev => [...prev, ...newNotifs]);
         
-        setLastNotified(prev => {
-          const next = { ...prev };
-          newlyOpened.forEach(shop => {
-            next[shop.id] = todayStr;
-          });
-          return next;
-        });
-        
-        // Play sound
+        // 播放音效
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         audio.volume = 0.4;
         audio.play().catch(() => {});
       }
     };
 
-    // Initial check after a short delay to let data load
+    // 初始檢查
     const initialTimeout = setTimeout(checkNotifications, 3000);
     const interval = setInterval(checkNotifications, 60000);
     
@@ -208,7 +206,7 @@ export default function App() {
       clearTimeout(initialTimeout);
       clearInterval(interval);
     };
-  }, [shops, bookmarks, lastNotified]);
+  }, [shops, bookmarks]);
 
   useEffect(() => {
     if (notifications.length > 0) {

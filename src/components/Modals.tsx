@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { X, Shield, KeyRound, HelpCircle, MapPin, Sparkles, Search, Edit3, Heart, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ImageIcon, Plus, Trash2, Globe, FileText, AlertTriangle, Settings, Info } from 'lucide-react';
+import { X, Shield, KeyRound, HelpCircle, MapPin, Sparkles, Search, Edit3, Heart, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ImageIcon, Plus, Trash2, Globe, FileText, AlertTriangle, Settings, Info, ChevronRight } from 'lucide-react';
 import { Shop } from '../types';
 import { TAG_LIST, SERVER_LIST, HOUSING_AREAS, DAYS_OF_WEEK, RP_LEVEL_LIST, RESERVATION_LIST } from '../constants';
 
@@ -157,6 +157,32 @@ export const HelpModal = ({ isOpen, onClose, onOpenTutorial }: { isOpen: boolean
           <div className="mt-2 p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-2"><AlertTriangle size={16} className="text-rose-500 shrink-0 mt-0.5" /><p className="text-xs text-rose-700 font-bold leading-relaxed">提醒店主：若當日實際營業時間與登記時間不同，請務必於社群或 Discord 提前公告，以免客人向隅哦！</p></div>
           </div></div>
           <div className="flex items-start gap-4"><div className="p-2.5 bg-pink-100 rounded-xl text-pink-600 shrink-0 shadow-sm border border-pink-200/50"><Heart size={20} /></div><div><h4 className="font-bold text-slate-800 mb-1">收藏愛店與營業提醒</h4><p className="text-sm text-slate-600 leading-relaxed">在店鋪資訊卡右上角點擊愛心收藏。當您的愛店「<span className="text-pink-500 font-bold">開始營業</span>」時，系統會自動彈出氣泡框與提示音通知您！（需保持網頁開啟）</p></div></div>
+          
+          <div className="h-px bg-slate-100 w-full my-2"></div>
+          
+          <div className="flex items-start gap-4">
+            <div className="p-2.5 bg-sky-100 rounded-xl text-sky-600 shrink-0 shadow-sm border border-sky-200/50">
+              <LinkIcon size={20} />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-slate-800 mb-1">好站連結</h4>
+              <div className="flex flex-col gap-2">
+                <a 
+                  href="https://lakeside-blooms-photo-society.replit.app/photostudio" 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="group flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-sky-300 hover:bg-sky-50 transition-all shadow-sm"
+                >
+                  <div>
+                    <p className="text-sm font-black text-slate-800 group-hover:text-sky-600 transition-colors">畔湖花攝</p>
+                    <p className="text-[10px] text-slate-500 font-bold">FFXIV繁中攝影愛好者公會社群</p>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-300 group-hover:text-sky-400 group-hover:translate-x-1 transition-all" />
+                </a>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-start gap-3"><MessageSquare size={18} className="text-slate-400 shrink-0 mt-0.5" /><p className="text-sm text-slate-600 font-medium leading-relaxed">忘記店鋪編輯密碼了嗎？<br />請聯絡 <span className="font-bold text-emerald-600">閻羅@奧汀</span> 協助找回。</p></div>
         </div>
         <div className="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-end"><button onClick={onClose} className="px-6 py-2.5 rounded-xl bg-sky-500 text-white font-bold hover:bg-sky-600 shadow-lg shadow-sky-500/30 transition-colors">我瞭解了</button></div>

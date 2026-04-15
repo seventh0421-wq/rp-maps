@@ -9,21 +9,37 @@ import { Shop } from './types';
 export const checkIsOpen = (shop: Shop) => {
   if (shop.isClosedThisWeek) return false;
   if (!shop.openDays || !shop.openTime || !shop.closeTime) return false;
+  
   const now = new Date();
   const currentDay = now.getDay();
-  if (!shop.openDays.includes(currentDay)) return false;
+  const yesterday = (currentDay + 6) % 7;
   
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const [openH, openM] = shop.openTime.split(':').map(Number);
   const [closeH, closeM] = shop.closeTime.split(':').map(Number);
   const openMinutes = openH * 60 + openM;
-  let closeMinutes = closeH * 60 + closeM;
-  
-  if (closeMinutes < openMinutes) {
-    // Overnights
-    return currentMinutes >= openMinutes || currentMinutes <= closeMinutes;
+  const closeMinutes = closeH * 60 + closeM;
+
+  // 情況 A: 檢查今天開始的班次
+  if (shop.openDays.includes(currentDay)) {
+    if (closeMinutes >= openMinutes) {
+      // 一般班次 (未跨夜)
+      if (currentMinutes >= openMinutes && currentMinutes <= closeMinutes) return true;
+    } else {
+      // 跨夜班次 - 目前處於前半段 (23:00 - 23:59)
+      if (currentMinutes >= openMinutes) return true;
+    }
   }
-  return currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
+
+  // 情況 B: 檢查昨天開始的班次 (是否跨夜到今天)
+  if (shop.openDays.includes(yesterday)) {
+    if (closeMinutes < openMinutes) {
+      // 昨天是跨夜班次 - 目前處於後半段 (00:00 - 02:00)
+      if (currentMinutes <= closeMinutes) return true;
+    }
+  }
+
+  return false;
 };
 
 export const getPlotCoordinates = (area: string, plot: number, isApartment: boolean, isSubdivision: boolean) => {
