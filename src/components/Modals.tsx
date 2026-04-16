@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { X, Shield, KeyRound, HelpCircle, MapPin, Sparkles, Search, Edit3, Heart, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ImageIcon, Plus, Trash2, Globe, FileText, AlertTriangle, Settings, Info, ChevronRight } from 'lucide-react';
+import { X, Shield, KeyRound, HelpCircle, MapPin, Sparkles, Search, Edit3, Heart, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ImageIcon, Plus, Trash2, Globe, FileText, AlertTriangle, Settings, Info, ChevronRight, Calendar } from 'lucide-react';
 import { Shop } from '../types';
 import { TAG_LIST, SERVER_LIST, HOUSING_AREAS, DAYS_OF_WEEK, RP_LEVEL_LIST, RESERVATION_LIST } from '../constants';
 
@@ -326,7 +326,7 @@ export const DisclaimerModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
 };
 
 export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, editingShop }: { isOpen: boolean, onClose: () => void, onSubmit: (data: Shop, isEdit: boolean) => void, currentArea: string, editingShop: Shop | null }) => {
-  const defaultForm = { name: '', ownerName: '', type: '咖啡廳', customType: '', server: '鳳凰', location: currentArea, ward: 1, plot: 1, isApartment: false, isSubdivision: false, openDays: [] as number[], openTime: '', closeTime: '', isClosedThisWeek: false, reservationType: '不用預約' as '不用預約' | '開放預約' | '須提前預約', description: '', images: [''], threads: '', discord: '', website: '', editPassword: '', rpLevels: [] as string[], tags: [] as string[] };
+  const defaultForm = { name: '', ownerName: '', type: '咖啡廳', customType: '', server: '鳳凰', location: currentArea, ward: 1, plot: 1, isApartment: false, isSubdivision: false, openDays: [] as number[], openTime: '', closeTime: '', isClosedThisWeek: false, reservationType: '不用預約' as '不用預約' | '開放預約' | '須提前預約', reservationLink: '', description: '', images: [''], threads: '', discord: '', website: '', editPassword: '', rpLevels: [] as string[], tags: [] as string[] };
   const [formData, setFormData] = useState(defaultForm);
   const [newTag, setNewTag] = useState('');
   const [isCustomTagActive, setIsCustomTagActive] = useState(false);
@@ -351,6 +351,7 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
           closeTime: editingShop.closeTime || '', 
           isClosedThisWeek: !!editingShop.isClosedThisWeek,
           reservationType: editingShop.reservationType || '不用預約',
+          reservationLink: editingShop.reservationLink || '',
           description: editingShop.description, 
           images: editingShop.images && editingShop.images.length > 0 ? editingShop.images : [''], 
           threads: editingShop.socialLinks?.threads || '', 
@@ -541,9 +542,9 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
                 </div>
               )}
             </div>
-            <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
-              <label className="block text-base font-bold text-rose-800 mb-2">預約制度</label>
-              <div className="flex gap-2">
+            <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 mb-2">
+              <label className="block text-base font-bold text-rose-800 mb-2 font-mono">📅 預約制度與連結</label>
+              <div className="flex gap-2 mb-3">
                 {RESERVATION_LIST.map(type => (
                   <button 
                     type="button" 
@@ -555,6 +556,21 @@ export const RegistrationModal = ({ isOpen, onClose, onSubmit, currentArea, edit
                   </button>
                 ))}
               </div>
+              {formData.reservationType !== '不用預約' && (
+                <div className="animate-in fade-in slide-in-from-top-1">
+                  <p className="text-[10px] text-rose-400 font-bold mb-1 ml-1">預約表單 / 網站連結 (選填)</p>
+                  <div className="flex items-center gap-2 bg-white border border-rose-200 rounded-xl px-3 py-1.5 focus-within:border-rose-500 transition-all">
+                    <Calendar size={16} className="text-rose-500" />
+                    <input 
+                      type="url" 
+                      className="flex-1 outline-none text-sm bg-transparent" 
+                      placeholder="https://..." 
+                      value={formData.reservationLink} 
+                      onChange={e => setFormData({...formData, reservationLink: e.target.value})} 
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100"><label className="block text-base font-bold text-indigo-800 mb-2">RP 程度 (可複選)</label><div className="flex gap-2">{RP_LEVEL_LIST.map(level => (<button type="button" key={level} onClick={() => toggleRPLevel(level)} className={`flex-1 py-1.5 rounded-lg text-sm font-bold transition-all border ${formData.rpLevels.includes(level) ? 'bg-indigo-500 text-white border-indigo-500 shadow-sm' : 'bg-white text-slate-400 border-slate-200'}`}>{level}</button>))}</div></div>
             <div className="bg-sky-50/50 p-4 rounded-2xl border border-sky-100"><label className="block text-base font-bold text-sky-800 mb-3">社群與網站 (選填)</label><div className="flex flex-col gap-2"><div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 focus-within:border-sky-500 transition-all"><AtSign size={16} className="text-sky-500" /><input type="url" className="flex-1 outline-none text-sm bg-transparent" placeholder="Threads 網址" value={formData.threads} onChange={e => setFormData({...formData, threads: e.target.value})} /></div><div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 focus-within:border-indigo-500 transition-all"><MessageCircle size={16} className="text-indigo-500" /><input type="url" className="flex-1 outline-none text-sm bg-transparent" placeholder="Discord 群組網址" value={formData.discord} onChange={e => setFormData({...formData, discord: e.target.value})} /></div><div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 focus-within:border-emerald-500 transition-all"><LinkIcon size={16} className="text-emerald-500" /><input type="url" className="flex-1 outline-none text-sm bg-transparent" placeholder="個人網站 / 噗浪網址" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} /></div></div></div>

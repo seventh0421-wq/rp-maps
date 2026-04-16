@@ -130,7 +130,28 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
               <div className="flex items-start gap-4"><div className="p-2.5 bg-amber-100 rounded-xl text-amber-600 shadow-sm border border-amber-200/50"><Clock size={20} /></div><div><p className="text-slate-500 text-xs font-bold mb-0.5">營業時間</p><p className="font-extrabold text-slate-800 text-base">每週{displayDays} {shop.openTime} {shop.closeTime ? `- ${shop.closeTime}` : ''}</p></div></div>
             )}
             {shop.reservationType && shop.reservationType !== '不用預約' && (
-              <div className="flex items-start gap-4"><div className="p-2.5 bg-rose-100 rounded-xl text-rose-600 shadow-sm border border-rose-200/50"><Calendar size={20} /></div><div><p className="text-slate-500 text-xs font-bold mb-0.5">預約制度</p><p className="font-extrabold text-slate-800 text-base">{shop.reservationType}</p></div></div>
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-rose-100 rounded-xl text-rose-600 shadow-sm border border-rose-200/50">
+                  <Calendar size={20} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-slate-500 text-xs font-bold mb-0.5">預約制度</p>
+                  <div className="flex items-center justify-between">
+                    <p className="font-extrabold text-slate-800 text-base">{shop.reservationType}</p>
+                    {shop.reservationLink && (
+                      <a 
+                        href={shop.reservationLink} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="px-4 py-1.5 bg-rose-500 text-white text-xs font-black rounded-lg hover:bg-rose-600 transition-all shadow-sm flex items-center gap-1.5"
+                      >
+                        <LinkIcon size={12} />
+                        立即預約
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
           <div className="h-px bg-slate-200 w-full my-1 shrink-0"></div>

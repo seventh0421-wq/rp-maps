@@ -20,6 +20,7 @@ export interface Shop {
   closeTime?: string;
   isClosedThisWeek?: boolean;
   reservationType?: '須提前預約' | '開放預約' | '不用預約';
+  reservationLink?: string;
   description: string;
   images: string[];
   tags: string[];
