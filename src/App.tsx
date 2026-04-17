@@ -11,9 +11,9 @@ import { motion, AnimatePresence } from 'motion/react';
 
 import { auth, db, APP_ID } from './firebase';
 import { Shop, Marker } from './types';
-import { HOUSING_AREAS, SERVER_LIST, TAG_LIST, AREA_MAPS, RP_LEVEL_LIST } from './constants';
+import { HOUSING_AREAS, SERVER_LIST, TAG_LIST, AREA_MAPS, RP_LEVEL_LIST, CHANGELOG_DATA } from './constants';
 import { checkIsOpen, getPlotCoordinates, getWeekNumber, shuffleWithSeed } from './utils';
-import { AdminLoginModal, AdminDashboard, HelpModal, DisclaimerModal, PasswordPromptModal, RegistrationModal, RPTutorialModal, RegistrationSuccessModal } from './components/Modals';
+import { AdminLoginModal, AdminDashboard, HelpModal, DisclaimerModal, PasswordPromptModal, RegistrationModal, RPTutorialModal, RegistrationSuccessModal, ChangelogModal } from './components/Modals';
 import { WeeklyItineraryModal } from './components/WeeklyItineraryModal';
 import { InteractiveMap } from './components/Map';
 import { ShopSidebar } from './components/Sidebar';
@@ -57,6 +57,21 @@ export default function App() {
   const [lastNotified, setLastNotified] = useState<Record<string, string>>({}); // shopId -> date string
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const [readChangelogIds, setReadChangelogIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('read_changelogs');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const markAsRead = (id: string) => {
+    if (!readChangelogIds.includes(id)) {
+      const next = [...readChangelogIds, id];
+      setReadChangelogIds(next);
+      localStorage.setItem('read_changelogs', JSON.stringify(next));
+    }
+  };
+
+  const unreadCount = CHANGELOG_DATA.filter(item => !readChangelogIds.includes(item.id)).length;
 
   const weeklyItinerary = React.useMemo(() => {
     if (shops.length === 0) return {};
@@ -367,6 +382,7 @@ export default function App() {
         }}
       />
       <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
+      <ChangelogModal isOpen={isChangelogOpen} onClose={() => setIsChangelogOpen(false)} readIds={readChangelogIds} onMarkAsRead={markAsRead} />
       
       {/* Notification System */}
       <div className="fixed top-24 right-6 z-[6000] flex flex-col gap-3 pointer-events-none">
@@ -576,9 +592,17 @@ export default function App() {
 
               <div className="mt-auto pt-6 space-y-4">
                 <div className="flex flex-col gap-2 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <div className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    <span>系統資訊</span>
-                    <span className="text-emerald-500">2026/04/14 更新</span>
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                    <span className="text-slate-400">系統資訊</span>
+                    <button 
+                      onClick={() => setIsChangelogOpen(true)}
+                      className="relative flex items-center gap-1.5 text-emerald-500 hover:text-emerald-700 transition-colors"
+                    >
+                      2026/04/16 更新
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white animate-pulse"></span>
+                      )}
+                    </button>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -701,7 +725,16 @@ export default function App() {
 
       <div className="absolute bottom-6 right-6 z-[400] animate-in fade-in duration-700 hidden sm:block">
         <div className="bg-white/80 backdrop-blur-xl px-5 py-2.5 rounded-full border border-slate-200/60 shadow-lg text-[10px] sm:text-xs font-bold text-slate-500 flex items-center gap-3 sm:gap-5">
-          <span className="flex items-center gap-1.5 whitespace-nowrap"><Calendar size={14} className="text-emerald-500" /> 更新日期：2026/04/14</span>
+          <button 
+            onClick={() => setIsChangelogOpen(true)}
+            className="group relative flex items-center gap-1.5 whitespace-nowrap hover:text-emerald-600 transition-colors"
+          >
+            <Calendar size={14} className="text-emerald-500 group-hover:scale-110 transition-transform" /> 
+            更新日期：2026/04/16
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white shadow-sm animate-pulse"></span>
+            )}
+          </button>
           <div className="w-px h-3 bg-slate-300 hidden sm:block"></div>
           <div className="flex items-center gap-3 sm:gap-5">
             <button onClick={() => setIsDisclaimerOpen(true)} className="flex items-center gap-1 text-rose-500 hover:text-rose-700 font-extrabold py-0.5 px-2 bg-rose-50 rounded-lg border border-rose-100/50 transition-colors"><FileText size={14} /> 免責聲明</button>

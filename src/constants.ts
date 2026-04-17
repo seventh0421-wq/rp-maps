@@ -10,6 +10,52 @@ export const RP_LEVEL_LIST = ['無', '輕', '中', '重'];
 export const DAYS_OF_WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 export const RESERVATION_LIST = ['不用預約', '開放預約', '須提前預約'];
 
+export interface ChangelogItem {
+  id: string;
+  date: string;
+  title: string;
+  content: string[];
+}
+
+export const CHANGELOG_DATA: ChangelogItem[] = [
+  {
+    id: 'v1.4',
+    date: '2026/04/16',
+    title: '新增預約連結功能',
+    content: [
+      '店主現在可以在店鋪登記中新增預約連結。',
+      '資訊卡片將顯示「立即預約」按鈕，方便顧客直接前往預約頁面。'
+    ]
+  },
+  {
+    id: 'v1.3',
+    date: '2026/04/15',
+    title: '修正跨日通知邏輯',
+    content: [
+      '優化跨午夜營業的通知判斷，不再重複彈出通知。',
+      '修正週三凌晨誤報營業的問題。'
+    ]
+  },
+  {
+    id: 'v1.2',
+    date: '2026/04/13',
+    title: '新增推薦店鋪小卡',
+    content: [
+      '在地圖左下角新增「推薦店鋪」隨機推薦正在營業中的優質店家。',
+      '修正地圖縮放時標記偏移的問題。'
+    ]
+  },
+  {
+    id: 'v1.1',
+    date: '2026/04/10',
+    title: '多標籤系統與自動通知',
+    content: [
+      '現在店鋪可以同時設定最多 5 個標籤。',
+      '加入收藏夾的店鋪在開門時會發出提示音與訊息通知。'
+    ]
+  }
+];
+
 export const AREA_MAPS = {
   '薰衣草苗圃': { normal: 'https://i.meee.com.tw/4drSCaH.png', sub: 'https://i.meee.com.tw/a74hm5y.png' },
   '海霧村': { normal: 'https://i.meee.com.tw/hASGwk1.png', sub: 'https://i.meee.com.tw/1mrWKEf.png' }, 

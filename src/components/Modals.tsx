@@ -6,7 +6,59 @@
 import React, { useState, useEffect } from 'react';
 import { X, Shield, KeyRound, HelpCircle, MapPin, Sparkles, Search, Edit3, Heart, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ImageIcon, Plus, Trash2, Globe, FileText, AlertTriangle, Settings, Info, ChevronRight, Calendar } from 'lucide-react';
 import { Shop } from '../types';
-import { TAG_LIST, SERVER_LIST, HOUSING_AREAS, DAYS_OF_WEEK, RP_LEVEL_LIST, RESERVATION_LIST } from '../constants';
+import { TAG_LIST, SERVER_LIST, HOUSING_AREAS, DAYS_OF_WEEK, RP_LEVEL_LIST, RESERVATION_LIST, CHANGELOG_DATA } from '../constants';
+
+export const ChangelogModal = ({ isOpen, onClose, readIds, onMarkAsRead }: { isOpen: boolean, onClose: () => void, readIds: string[], onMarkAsRead: (id: string) => void }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="absolute inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-emerald-50">
+          <h2 className="text-xl font-bold text-emerald-800 flex items-center gap-2">
+            <Sparkles className="text-emerald-500" size={22} /> 更新日誌
+          </h2>
+          <button onClick={onClose} className="text-emerald-700/50 hover:text-emerald-700 transition-colors bg-white p-1 rounded-full shadow-sm">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar space-y-4">
+          {CHANGELOG_DATA.map((item) => {
+            const isRead = readIds.includes(item.id);
+            return (
+              <div 
+                key={item.id} 
+                className={`p-5 rounded-2xl border transition-all ${isRead ? 'bg-slate-50 border-slate-100' : 'bg-emerald-50 border-emerald-200 shadow-sm ring-1 ring-emerald-100'}`}
+                onMouseEnter={() => !isRead && onMarkAsRead(item.id)}
+                onClick={() => !isRead && onMarkAsRead(item.id)}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className={`font-black text-lg ${isRead ? 'text-slate-700' : 'text-emerald-800'}`}>
+                    {item.title}
+                    {!isRead && <span className="ml-2 inline-block w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>}
+                  </h3>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isRead ? 'bg-slate-200 text-slate-500' : 'bg-emerald-200 text-emerald-700'}`}>
+                    {item.date}
+                  </span>
+                </div>
+                <ul className="space-y-1.5 list-none">
+                  {item.content.map((line, idx) => (
+                    <li key={idx} className={`text-sm font-medium flex gap-2 ${isRead ? 'text-slate-500' : 'text-slate-600'}`}>
+                      <span className="text-emerald-400 font-bold">•</span>
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+        <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-center">
+          <button onClick={onClose} className="px-10 py-2.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 shadow-xl shadow-emerald-500/30 transition-all active:scale-95">關閉視窗</button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const AdminLoginModal = ({ isOpen, onClose, onLogin }: { isOpen: boolean, onClose: () => void, onLogin: () => void }) => {
   const [pwd, setPwd] = useState('');
