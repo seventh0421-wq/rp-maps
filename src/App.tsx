@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Sparkles, Coffee, ChevronDown, Tag, HelpCircle, Shield, Heart, Calendar, User, FileText, MapPin, Map, X, Sun, Menu } from 'lucide-react';
+import { Plus, Search, Sparkles, Coffee, ChevronDown, Tag, HelpCircle, Shield, Heart, Calendar, User, FileText, MapPin, Map, X, Sun, Menu, Book } from 'lucide-react';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
@@ -13,7 +13,7 @@ import { auth, db, APP_ID } from './firebase';
 import { Shop, Marker } from './types';
 import { HOUSING_AREAS, SERVER_LIST, TAG_LIST, AREA_MAPS, RP_LEVEL_LIST, CHANGELOG_DATA } from './constants';
 import { checkIsOpen, getPlotCoordinates, getWeekNumber, shuffleWithSeed } from './utils';
-import { AdminLoginModal, AdminDashboard, HelpModal, DisclaimerModal, PasswordPromptModal, RegistrationModal, RPTutorialModal, RegistrationSuccessModal, ChangelogModal } from './components/Modals';
+import { AdminLoginModal, AdminDashboard, HelpModal, DisclaimerModal, PasswordPromptModal, RegistrationModal, RPTutorialModal, RegistrationSuccessModal, ChangelogModal, ShopDirectoryModal } from './components/Modals';
 import { WeeklyItineraryModal } from './components/WeeklyItineraryModal';
 import { InteractiveMap } from './components/Map';
 import { ShopSidebar } from './components/Sidebar';
@@ -47,7 +47,7 @@ export default function App() {
   const [activeTag, setActiveTag] = useState('全部');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [recommendation, setRecommendation] = useState<Shop | null>(null);
+  const [openNowShops, setOpenNowShops] = useState<Shop[]>([]);
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [isListViewOpen, setIsListViewOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -57,6 +57,7 @@ export default function App() {
   const [lastNotified, setLastNotified] = useState<Record<string, string>>({}); // shopId -> date string
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   const [readChangelogIds, setReadChangelogIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('read_changelogs');
@@ -91,8 +92,7 @@ export default function App() {
       // Find shops open on this day
       const availableShops = shuffledShops.filter((s: Shop) => s.openDays?.includes(day));
       
-      // Pick up to 3 shops per day to keep it manageable but diverse
-      // Use a sliding window based on the day index to ensure different shops each day
+      // Pick up to 2 shops per day
       const startIdx = (index * 2) % Math.max(1, availableShops.length);
       const dayShops = availableShops.slice(startIdx, startIdx + 2);
       
@@ -156,7 +156,7 @@ export default function App() {
 
   useEffect(() => {
     const updateStatus = () => {
-      const openNowShops = shops.filter(shop => {
+      const open = shops.filter(shop => {
         const isOpen = checkIsOpen(shop);
         if (!isOpen) return false;
         
@@ -166,16 +166,9 @@ export default function App() {
           return shop.location === activeArea && (isSubdivision ? shopIsSub : !shopIsSub);
         }
         
-        // If no area selected, any open shop is fine
         return true;
       });
-
-      if (openNowShops.length > 0) {
-        setRecommendation(prev => {
-          if (prev && openNowShops.find(s => s.id === prev.id)) return prev;
-          return openNowShops[Math.floor(Math.random() * openNowShops.length)];
-        });
-      } else { setRecommendation(null); }
+      setOpenNowShops(open);
     };
     updateStatus();
     const interval = setInterval(updateStatus, 60000);
@@ -383,6 +376,18 @@ export default function App() {
       />
       <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
       <ChangelogModal isOpen={isChangelogOpen} onClose={() => setIsChangelogOpen(false)} readIds={readChangelogIds} onMarkAsRead={markAsRead} />
+      <ShopDirectoryModal 
+        isOpen={isDirectoryOpen} 
+        onClose={() => setIsDirectoryOpen(false)} 
+        shops={shops} 
+        onSelectShop={(shop) => {
+          setActiveServer(shop.server);
+          setActiveArea(shop.location);
+          setIsSubdivision(shop.isApartment ? shop.isSubdivision || false : shop.plot > 30);
+          setSelectedShop(shop);
+          setIsSidebarOpen(true);
+        }}
+      />
       
       {/* Notification System */}
       <div className="fixed top-24 right-6 z-[6000] flex flex-col gap-3 pointer-events-none">
@@ -557,6 +562,19 @@ export default function App() {
                       <span className="text-[10px] font-bold text-indigo-400">點我隨機推薦</span>
                     </div>
                   </button>
+
+                  <button 
+                    onClick={() => { setIsDirectoryOpen(true); setIsMobileMenuOpen(false); }}
+                    className="w-full flex items-center gap-4 p-4 bg-white/60 backdrop-blur-xl rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md hover:bg-white transition-all text-left group"
+                  >
+                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200 shrink-0">
+                      <Book size={20} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-black text-emerald-700 leading-tight">全店名錄</span>
+                      <span className="text-[10px] font-bold text-emerald-400">瀏覽目前的全部登記店鋪</span>
+                    </div>
+                  </button>
                 </div>
 
                 {shops.filter(s => s.updatedAt && (Date.now() - s.updatedAt < 24 * 60 * 60 * 1000)).length > 0 && (
@@ -710,16 +728,22 @@ export default function App() {
         )}
       </div>
 
-      {recommendation && !isSidebarOpen && (
-        <div className="absolute bottom-6 left-6 z-[400] pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div onClick={() => handleMarkerClick(recommendation)} className="group cursor-pointer bg-white/95 backdrop-blur-xl p-5 rounded-3xl border border-amber-100 shadow-lg flex items-center gap-4 max-w-sm hover:-translate-y-1 transition-all">
-            <div className="bg-gradient-to-br from-emerald-400 to-teal-500 p-3.5 rounded-2xl text-white"><Sparkles size={24} /></div>
-            <div className="overflow-hidden">
-              <p className="text-[10px] uppercase tracking-widest text-emerald-600 font-extrabold mb-1">正在營業中</p>
-              <h4 className="font-extrabold text-slate-800 text-lg leading-tight truncate">{recommendation.name}</h4>
-              <p className="text-xs font-bold text-slate-500 truncate mt-1">{recommendation.tags.join(' · ')}</p>
+      {openNowShops.length > 0 && !isSidebarOpen && (
+        <div className="absolute bottom-6 left-6 z-[400] pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col gap-3 max-h-[40vh] overflow-y-auto no-scrollbar pr-2">
+          {openNowShops.map(shop => (
+            <div 
+              key={shop.id}
+              onClick={() => handleMarkerClick(shop)} 
+              className="group cursor-pointer bg-white/95 backdrop-blur-xl p-4 rounded-3xl border border-amber-100 shadow-lg flex items-center gap-4 w-full sm:min-w-[280px] sm:max-w-sm hover:-translate-y-1 transition-all"
+            >
+              <div className="bg-gradient-to-br from-emerald-400 to-teal-500 p-2.5 rounded-2xl text-white"><Sparkles size={20} /></div>
+              <div className="overflow-hidden">
+                <p className="text-[9px] uppercase tracking-widest text-emerald-600 font-extrabold mb-0.5">正在營業中</p>
+                <h4 className="font-extrabold text-slate-800 text-sm leading-tight truncate">{shop.name}</h4>
+                <p className="text-[10px] font-bold text-slate-500 truncate mt-0.5">{shop.tags.join(' · ')}</p>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
 
@@ -730,7 +754,7 @@ export default function App() {
             className="group relative flex items-center gap-1.5 whitespace-nowrap hover:text-emerald-600 transition-colors"
           >
             <Calendar size={14} className="text-emerald-500 group-hover:scale-110 transition-transform" /> 
-            更新日期：2026/04/16
+            更新日期：2026/04/20
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white shadow-sm animate-pulse"></span>
             )}
@@ -869,6 +893,19 @@ export default function App() {
           <div className="flex flex-col items-start">
             <span className="text-sm font-black text-indigo-600 leading-tight">不知道去哪？</span>
             <span className="text-xs font-bold text-indigo-400">點我隨機推薦一間店！</span>
+          </div>
+        </button>
+
+        <button 
+          onClick={() => setIsDirectoryOpen(true)}
+          className="pointer-events-auto group bg-white/90 backdrop-blur-xl p-4 rounded-full border border-emerald-100 shadow-xl hover:shadow-emerald-200/50 hover:-translate-y-1 transition-all flex items-center gap-4 w-64"
+        >
+          <div className="w-11 h-11 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200 group-hover:rotate-12 transition-transform shrink-0">
+            <Book size={22} />
+          </div>
+          <div className="flex flex-col items-start">
+            <span className="text-sm font-black text-emerald-700 leading-tight">全店名錄</span>
+            <span className="text-xs font-bold text-emerald-400">目前共登記 {shops.length} 間店鋪</span>
           </div>
         </button>
       </div>

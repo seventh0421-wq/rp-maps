@@ -4,9 +4,128 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { X, Shield, KeyRound, HelpCircle, MapPin, Sparkles, Search, Edit3, Heart, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ImageIcon, Plus, Trash2, Globe, FileText, AlertTriangle, Settings, Info, ChevronRight, Calendar } from 'lucide-react';
+import { X, Shield, KeyRound, HelpCircle, MapPin, Sparkles, Search, Edit3, Heart, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ImageIcon, Plus, Trash2, Globe, FileText, AlertTriangle, Settings, Info, ChevronRight, Calendar, Book, Clock, User } from 'lucide-react';
 import { Shop } from '../types';
 import { TAG_LIST, SERVER_LIST, HOUSING_AREAS, DAYS_OF_WEEK, RP_LEVEL_LIST, RESERVATION_LIST, CHANGELOG_DATA } from '../constants';
+
+export const ShopDirectoryModal = ({ isOpen, onClose, shops, onSelectShop }: { isOpen: boolean, onClose: () => void, shops: Shop[], onSelectShop: (shop: Shop) => void }) => {
+  const [search, setSearch] = useState('');
+  const [selectedArea, setSelectedArea] = useState('全部');
+  const [selectedTag, setSelectedTag] = useState('全部');
+
+  if (!isOpen) return null;
+
+  const filteredShops = shops.filter(shop => {
+    const matchesSearch = shop.name.toLowerCase().includes(search.toLowerCase()) || 
+                         shop.ownerName?.toLowerCase().includes(search.toLowerCase());
+    const matchesArea = selectedArea === '全部' || shop.location === selectedArea;
+    const matchesTag = selectedTag === '全部' || shop.tags.includes(selectedTag);
+    return matchesSearch && matchesArea && matchesTag;
+  }).sort((a, b) => b.updatedAt - a.updatedAt);
+
+  return (
+    <div className="absolute inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <div>
+            <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+              <Book className="text-emerald-500" size={24} /> 全店名錄
+            </h2>
+            <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">目前共登記 {shops.length} 間店鋪</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors bg-white p-2 rounded-full shadow-sm border border-slate-100">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 bg-white border-b border-slate-50 space-y-4">
+          <div className="relative">
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="搜尋店名或店主名稱..." 
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500 focus:bg-white transition-all shadow-inner"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-100">
+              <span className="text-[10px] font-black text-slate-400 uppercase px-2">地區</span>
+              {['全部', ...HOUSING_AREAS].map(area => (
+                <button 
+                  key={area}
+                  onClick={() => setSelectedArea(area)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${selectedArea === area ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  {area}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-100">
+              <span className="text-[10px] font-black text-slate-400 uppercase px-2">標籤</span>
+              <select 
+                title="選擇標籤"
+                value={selectedTag}
+                onChange={(e) => setSelectedTag(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-600 outline-none px-2 py-1 cursor-pointer"
+              >
+                {TAG_LIST.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 bg-white custom-scrollbar">
+          {filteredShops.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredShops.map((shop) => (
+                <div 
+                  key={shop.id}
+                  onClick={() => { onSelectShop(shop); onClose(); }}
+                  className="group bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-100 p-4 rounded-2xl cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-black text-slate-800 group-hover:text-emerald-700 transition-colors uppercase tracking-tight">{shop.name}</h3>
+                    <div className="flex gap-1">
+                      {shop.tags.slice(0, 2).map(tag => (
+                        <span key={tag} className="text-[9px] font-black bg-white text-slate-400 px-1.5 py-0.5 rounded border border-slate-100">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5 mt-3">
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                      <MapPin size={12} className="text-slate-300" />
+                      <span>{shop.location} · {shop.server}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                      <User size={12} className="text-slate-300" />
+                      <span>{shop.ownerName || '匿名店主'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-600/70">
+                      <Clock size={12} className="text-emerald-400/70" />
+                      <span>{shop.openDays.map(d => DAYS_OF_WEEK[d]).join('、')} {shop.openTime} ~ {shop.closeTime}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-4">
+              <Search size={48} className="opacity-20" />
+              <p className="font-black uppercase tracking-widest text-sm">找不到符合條件的店鋪</p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          <span>點擊卡片可直接在地圖上展開</span>
+          <span className="text-emerald-500">POWERED BY EORZEA RP MAP</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const ChangelogModal = ({ isOpen, onClose, readIds, onMarkAsRead }: { isOpen: boolean, onClose: () => void, readIds: string[], onMarkAsRead: (id: string) => void }) => {
   if (!isOpen) return null;

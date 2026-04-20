@@ -19,6 +19,15 @@ export interface ChangelogItem {
 
 export const CHANGELOG_DATA: ChangelogItem[] = [
   {
+    id: 'v1.5',
+    date: '2026/04/20',
+    title: '全店名錄與營業列表優化',
+    content: [
+      '新增「全店名錄」功能，可搜尋所有登記店鋪並快速定位。',
+      '「正在營業中」清單現在會列出「所有」當前正在營業的店家。'
+    ]
+  },
+  {
     id: 'v1.4',
     date: '2026/04/16',
     title: '新增預約連結功能',
