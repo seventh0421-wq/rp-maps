@@ -659,7 +659,7 @@ export default function App() {
                       onClick={() => setIsChangelogOpen(true)}
                       className="relative flex items-center gap-1.5 text-emerald-500 hover:text-emerald-700 transition-colors"
                     >
-                      2026/04/16 更新
+                      2026/05/02 更新
                       {unreadCount > 0 && (
                         <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white animate-pulse"></span>
                       )}
@@ -808,7 +808,7 @@ export default function App() {
             className="group relative flex items-center gap-1.5 whitespace-nowrap hover:text-emerald-600 transition-colors"
           >
             <Calendar size={14} className="text-emerald-500 group-hover:scale-110 transition-transform" /> 
-            更新日期：2026/04/20
+            更新日期：2026/05/02
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white shadow-sm animate-pulse"></span>
             )}
