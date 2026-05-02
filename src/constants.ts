@@ -19,6 +19,15 @@ export interface ChangelogItem {
 
 export const CHANGELOG_DATA: ChangelogItem[] = [
   {
+    id: 'v1.6',
+    date: '2026/05/02',
+    title: '新增好站連結與店鋪分享',
+    content: [
+      '新增「好站連結」功能，方便快速前往相關優質資源網站。',
+      '新增「店鋪分享」功能，可將店鋪資訊一鍵複製連結或產出分享圖供社群推廣。'
+    ]
+  },
+  {
     id: 'v1.5',
     date: '2026/04/20',
     title: '全店名錄與營業列表優化',
