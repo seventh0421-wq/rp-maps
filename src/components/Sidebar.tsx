@@ -4,19 +4,28 @@
  */
 
 import React from 'react';
-import { X, Heart, Edit3, Globe, MapPin, Clock, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ChevronLeft, ChevronRight, Calendar, User } from 'lucide-react';
+import { X, Heart, Edit3, Globe, MapPin, Clock, MessageSquare, AtSign, MessageCircle, Link as LinkIcon, ChevronLeft, ChevronRight, Calendar, User, Share2, Check } from 'lucide-react';
 import { Shop } from '../types';
 import { checkIsOpen } from '../utils';
 import { DAYS_OF_WEEK } from '../constants';
 
 export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, onToggleBookmark, isShifted }: { shop: Shop | null, isOpen: boolean, onClose: () => void, onEditClick: (shop: Shop) => void, isBookmarked: boolean, onToggleBookmark: (id: string) => void, isShifted?: boolean }) => {
   const [currentImgIndex, setCurrentImgIndex] = React.useState(0);
+  const [isCopied, setIsCopied] = React.useState(false);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   if (!shop) return null;
   const imagesToDisplay = shop.images && shop.images.length > 0 ? shop.images : ['https://images.unsplash.com/photo-1579781354186-012d7e9fa46c?q=80&w=800&auto=format&fit=crop'];
   const isCurrentlyOpen = checkIsOpen(shop);
   const displayDays = shop.openDays?.map(d => DAYS_OF_WEEK[d]).join('、') || '';
+
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}?shopId=${shop.id}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
+  };
   
   const handleScroll = () => {
     if (scrollRef.current) {
@@ -49,6 +58,13 @@ export const ShopSidebar = ({ shop, isOpen, onClose, onEditClick, isBookmarked, 
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-4 mb-2 sm:hidden shrink-0" />
         
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+          <button 
+            onClick={handleShare} 
+            className={`p-2 backdrop-blur-md rounded-full shadow-lg transition-all ${isCopied ? 'bg-emerald-500 text-white' : 'bg-white/90 text-sky-500 hover:text-sky-600'}`}
+            title="分享此店鋪"
+          >
+            {isCopied ? <Check size={18} /> : <Share2 size={18} />}
+          </button>
           <button onClick={() => onToggleBookmark(shop.id)} className={`p-2 backdrop-blur-md rounded-full shadow-lg transition-all ${isBookmarked ? 'bg-pink-500 text-white' : 'bg-white/90 text-pink-500'}`} title={isBookmarked ? "取消收藏" : "加入收藏"}><Heart size={18} fill={isBookmarked ? "currentColor" : "none"} /></button>
           <button onClick={() => onEditClick(shop)} className="p-2 bg-amber-500 rounded-full text-white shadow-lg" title="編輯店面資訊"><Edit3 size={18} /></button>
           <button onClick={onClose} className="p-2 bg-black/30 hover:bg-white/90 rounded-full text-white hover:text-slate-800 transition-all shadow-sm"><X size={20} /></button>

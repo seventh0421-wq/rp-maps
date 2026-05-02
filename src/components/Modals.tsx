@@ -350,6 +350,19 @@ export const HelpModal = ({ isOpen, onClose, onOpenTutorial }: { isOpen: boolean
                   </div>
                   <ChevronRight size={16} className="text-slate-300 group-hover:text-sky-400 group-hover:translate-x-1 transition-all" />
                 </a>
+
+                <a 
+                  href="https://seiran-ilai.github.io/studio/RP_marco" 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="group flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-sky-300 hover:bg-sky-50 transition-all shadow-sm"
+                >
+                  <div>
+                    <p className="text-sm font-black text-slate-800 group-hover:text-sky-600 transition-colors">RP巨集小工具</p>
+                    <p className="text-[10px] text-slate-500 font-bold">為 FF14 角色扮演 而生的巨集工具</p>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-300 group-hover:text-sky-400 group-hover:translate-x-1 transition-all" />
+                </a>
               </div>
             </div>
           </div>

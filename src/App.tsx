@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Sparkles, Coffee, ChevronDown, Tag, HelpCircle, Shield, Heart, Calendar, User, FileText, MapPin, Map, X, Sun, Menu, Book } from 'lucide-react';
+import { Plus, Search, Sparkles, Coffee, ChevronDown, Tag, HelpCircle, Shield, Heart, Calendar, User, FileText, MapPin, Map, X, Sun, Menu, Book, Share2 } from 'lucide-react';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
@@ -42,6 +42,7 @@ export default function App() {
   const [pwdErrorMsg, setPwdErrorMsg] = useState('');
   const [shopToEdit, setShopToEdit] = useState<Shop | null>(null); 
   const [activeArea, setActiveArea] = useState('選擇住宅區'); 
+  const [activeWard, setActiveWard] = useState('全部');
   const [isSubdivision, setIsSubdivision] = useState(false);
   const [activeServer, setActiveServer] = useState('所有伺服器');
   const [activeTag, setActiveTag] = useState('全部');
@@ -114,6 +115,22 @@ export default function App() {
     
     return itinerary;
   }, [shops]);
+
+  useEffect(() => {
+    if (shops.length > 0 && !selectedShop) {
+      const params = new URLSearchParams(window.location.search);
+      const shopId = params.get('shopId');
+      if (shopId) {
+        const targetShop = shops.find(s => s.id === shopId);
+        if (targetShop) {
+          handleMarkerClick(targetShop);
+          // Clear URL params to avoid re-opening on manual refresh if closed
+          const newUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+        }
+      }
+    }
+  }, [shops, selectedShop]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -234,7 +251,16 @@ export default function App() {
     const shopIsSub = shop.isApartment ? shop.isSubdivision : shop.plot > 30;
     const matchSubdivision = isSubdivision ? shopIsSub : !shopIsSub; 
     const matchServer = activeServer === '所有伺服器' || shop.server === activeServer;
-    if (activeTag === '💖 收藏') { return bookmarks.includes(shop.id) && matchArea && matchSubdivision && matchServer; }
+    const matchWard = activeWard === '全部' || shop.ward.toString() === activeWard;
+    const matchSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      (shop.ownerName && shop.ownerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                      (shop.ownerId && shop.ownerId.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    if (activeTag === '💖 收藏') { 
+      // 收藏列表在搜尋時應保持全局搜尋
+      if (searchQuery.trim() !== '') return bookmarks.includes(shop.id) && matchSearch;
+      return bookmarks.includes(shop.id) && matchArea && matchSubdivision && matchServer && matchWard; 
+    }
     
     let matchTag = activeTag === '全部' || shop.type === activeTag || (shop.tags && shop.tags.includes(activeTag));
     
@@ -243,34 +269,26 @@ export default function App() {
       matchTag = shop.rpLevels?.includes(level) || false;
     }
 
-    const matchSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                      (shop.ownerName && shop.ownerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                      (shop.ownerId && shop.ownerId.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    // 如果有輸入搜尋文字，則優先顯示全服全區符合搜尋的店
+    // 搜尋模式下顯示全服全區符合搜尋的店
     if (searchQuery.trim() !== '') {
-      // 在搜尋模式下，如果還有選標籤，則標籤也要符合
-      if (activeTag !== '全部' && activeTag !== '💖 收藏') {
-        return matchSearch && matchTag;
-      }
-      if (activeTag === '💖 收藏') {
-        return matchSearch && bookmarks.includes(shop.id);
-      }
+      if (activeTag !== '全部') return matchSearch && matchTag;
       return matchSearch;
     }
 
-    // 如果正在使用標籤篩選且列表開啟，則列表顯示「全服全區」符合標籤的店
+    // 列表模式且有標籤篩選時，顯示全區符合標籤的店（但仍維持伺服器篩選）
     if (activeTag !== '全部' && isListViewOpen) {
-      return matchTag && matchSearch;
+      return matchTag && matchServer;
     }
 
-    return matchArea && matchSubdivision && matchServer && matchTag && matchSearch;
+    return matchArea && matchSubdivision && matchServer && matchWard && matchTag;
   });
 
   const mapMarkers: Marker[] = filteredShops
     .filter(shop => {
       const shopIsSub = shop.isApartment ? shop.isSubdivision : shop.plot > 30;
-      return shop.location === activeArea && (isSubdivision ? shopIsSub : !shopIsSub);
+      const matchServerMap = activeServer === '所有伺服器' || shop.server === activeServer;
+      const matchWardMap = activeWard === '全部' || shop.ward.toString() === activeWard;
+      return shop.location === activeArea && (isSubdivision ? shopIsSub : !shopIsSub) && matchServerMap && matchWardMap;
     })
     .map(shop => {
       const coords = getPlotCoordinates(shop.location, shop.plot, shop.isApartment, shop.isSubdivision);
@@ -286,7 +304,14 @@ export default function App() {
 
   const handleSelectSuggestion = (shop: Shop) => {
     setHasInteracted(true);
-    setSearchQuery(''); setActiveServer(shop.server); setActiveArea(shop.location); setIsSubdivision(shop.isApartment ? shop.isSubdivision : shop.plot > 30); setActiveTag('全部'); setIsSearchFocused(false); handleMarkerClick(shop); 
+    setSearchQuery(''); 
+    setActiveServer(shop.server); 
+    setActiveArea(shop.location); 
+    setActiveWard(shop.ward.toString());
+    setIsSubdivision(shop.isApartment ? shop.isSubdivision : shop.plot > 30); 
+    setActiveTag('全部'); 
+    setIsSearchFocused(false); 
+    handleMarkerClick(shop); 
   };
 
   const handleRandomRecommend = () => {
@@ -300,6 +325,7 @@ export default function App() {
     setHasInteracted(true);
     setActiveServer(shopData.server);
     setActiveArea(shopData.location);
+    setActiveWard(shopData.ward.toString());
     setIsSubdivision(shopData.isApartment ? shopData.isSubdivision : shopData.plot > 30);
     setSelectedShop(shopData); 
     setIsSidebarOpen(true); 
@@ -369,6 +395,7 @@ export default function App() {
         onSelectShop={(shop) => {
           setActiveServer(shop.server);
           setActiveArea(shop.location);
+          setActiveWard(shop.ward.toString());
           setIsSubdivision(shop.isApartment ? shop.isSubdivision || false : shop.plot > 30);
           setSelectedShop(shop);
           setIsSidebarOpen(true);
@@ -383,6 +410,7 @@ export default function App() {
         onSelectShop={(shop) => {
           setActiveServer(shop.server);
           setActiveArea(shop.location);
+          setActiveWard(shop.ward.toString());
           setIsSubdivision(shop.isApartment ? shop.isSubdivision || false : shop.plot > 30);
           setSelectedShop(shop);
           setIsSidebarOpen(true);
@@ -506,20 +534,35 @@ export default function App() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">分區選擇</label>
-                  <div className="flex p-1 bg-slate-100 rounded-xl">
-                    <button 
-                      onClick={() => { setIsSubdivision(false); setIsMobileMenuOpen(false); }}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
-                    >
-                      一般
-                    </button>
-                    <button 
-                      onClick={() => { setIsSubdivision(true); setIsMobileMenuOpen(false); }}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
-                    >
-                      擴建
-                    </button>
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">區域/區號選擇</label>
+                  <div className="flex gap-2">
+                    <div className="flex-1 p-1 bg-slate-100 rounded-xl flex">
+                      <button 
+                        onClick={() => { setIsSubdivision(false); setIsMobileMenuOpen(false); }}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
+                      >
+                        一般
+                      </button>
+                      <button 
+                        onClick={() => { setIsSubdivision(true); setIsMobileMenuOpen(false); }}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
+                      >
+                        擴建
+                      </button>
+                    </div>
+                    <div className="flex-1 relative">
+                      <select 
+                        className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-2 text-xs font-bold text-slate-700 outline-none appearance-none cursor-pointer"
+                        value={activeWard}
+                        onChange={(e) => { setActiveWard(e.target.value); setIsMobileMenuOpen(false); }}
+                      >
+                        <option value="全部">所有號區</option>
+                        {Array.from({ length: 30 }, (_, i) => (i + 1).toString()).map(w => (
+                          <option key={w} value={w}>{w} 區</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 
@@ -669,6 +712,17 @@ export default function App() {
             <div className={`flex items-center rounded-xl p-1 border shadow-sm shrink-0 transition-all ${activeArea === '選擇住宅區' ? 'bg-slate-50/50 border-slate-100 opacity-50 pointer-events-none' : 'bg-white/50 border-slate-200/60'}`}>
               <button onClick={() => { setIsSubdivision(false); setIsSidebarOpen(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${activeArea !== '選擇住宅區' && !isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}>一般</button>
               <button onClick={() => { setIsSubdivision(true); setIsSidebarOpen(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${activeArea !== '選擇住宅區' && isSubdivision ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}>擴建</button>
+              <div className="w-px h-4 bg-slate-200 mx-1"></div>
+              <select 
+                className="bg-transparent text-xs font-bold text-slate-600 outline-none cursor-pointer px-2"
+                value={activeWard}
+                onChange={(e) => setActiveWard(e.target.value)}
+              >
+                <option value="全部">所有號區</option>
+                {Array.from({ length: 30 }, (_, i) => (i + 1).toString()).map(w => (
+                  <option key={w} value={w}>{w} 區</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -778,6 +832,7 @@ export default function App() {
           onShopClick={(shop) => {
             setActiveServer(shop.server);
             setActiveArea(shop.location);
+            setActiveWard(shop.ward.toString());
             setIsSubdivision(shop.isApartment ? shop.isSubdivision : shop.plot > 30);
             handleMarkerClick(shop);
             // On mobile, close list when opening sidebar
